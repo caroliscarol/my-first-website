@@ -1,0 +1,219 @@
+/* 硅基员工页面 */
+.employees-page {
+  background-color: #f5f6f7;
+}
+
+.employees-container {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 32px 40px 48px;
+}
+
+.employees-header {
+  margin-bottom: 32px;
+}
+
+.employees-back {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.employees-back:hover {
+  color: #1e9b62;
+  text-decoration: underline;
+}
+
+.employees-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.employees-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
+
+.employees-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.employees-section-left {
+  /* 左侧：已入职 */
+}
+
+.employees-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.employees-section {
+  background-color: var(--color-bg);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  padding: 20px 20px 24px;
+  box-shadow: var(--shadow-light);
+}
+
+.employees-section-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.employees-section-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-sub);
+  line-height: 1.5;
+}
+
+.employees-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.employees-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background-color: #fafafa;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.employees-card:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.employees-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--color-border);
+  background-size: cover;
+  background-position: center;
+}
+
+.employees-card-avatar.role-designer {
+  background-image: url("images/avatar-horse-designer.png");
+}
+
+.employees-card-avatar.role-translator {
+  background-image: url("images/avatar-horse-translator.png");
+}
+
+.employees-card-avatar.role-ops {
+  background-image: url("images/avatar-horse-ops.png");
+}
+
+.employees-card-avatar.role-analyst {
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.employees-card-avatar.role-hotspot {
+  background-image: url("images/avatar-horse-hotspot.png");
+}
+
+.employees-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.employees-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.employees-card-id {
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+
+.employees-empty {
+  padding: 24px 16px;
+  text-align: center;
+  background-color: #fafafa;
+  border-radius: 10px;
+  border: 1px dashed var(--color-border);
+}
+
+.employees-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
+
+.employees-empty-hint {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  color: var(--color-text-placeholder) !important;
+}
+
+.employees-wish {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.employees-wish-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: var(--font-main);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.employees-wish-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 181, 115, 0.15);
+}
+
+.employees-wish-input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.employees-wish-btn {
+  align-self: flex-start;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.employees-wish-btn:hover {
+  background-color: #1e9b62;
+  box-shadow: 0 2px 8px rgba(34, 181, 115, 0.35);
+}

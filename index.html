@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>海外智能工作台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- 左栏：Logo + 历史任务 + 用户信息 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon"></div>
+          <span class="logo-text" data-i18n="appTitle">海外智能工作台</span>
+        </div>
+        <div class="lang-switcher" role="group" aria-label="语言">
+          <select class="lang-select" id="langSelect" title="选择语言">
+            <option value="zh" selected>中文</option>
+            <option value="en">EN</option>
+            <option value="th">ไทย</option>
+          </select>
+        </div>
+      </div>
+
+      <section class="silicon-colleagues">
+        <div class="silicon-header">
+          <div class="silicon-header-row">
+            <span class="silicon-title" data-i18n="siliconTitle">可协作的硅基同事</span>
+            <a href="employees.html" class="silicon-link" data-i18n="siliconLink">全体硅基员工 →</a>
+          </div>
+          <div class="silicon-subtitle" data-i18n="siliconSubtitle">
+            点选一位同事，一键 @ TA 帮你完成任务
+          </div>
+        </div>
+        <div class="silicon-list">
+          <div
+            class="silicon-card"
+            data-mention="@海报图设计师（0001）"
+            data-action="image"
+            data-employee="0001"
+          >
+            <div class="silicon-avatar role-designer" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name" data-i18n="employee1Name">海报图设计师</div>
+              <div class="silicon-meta" data-i18n="employee1Meta">ID: 0001 · 海报 / KV / Banner</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@专辑标题翻译官（0002）"
+            data-action="content"
+            data-employee="0002"
+          >
+            <div class="silicon-avatar role-translator" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name" data-i18n="employee2Name">专辑标题翻译官</div>
+              <div class="silicon-meta" data-i18n="employee2Meta">ID: 0002 · 中英 / 多语种标题</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@海外运营文案官（0003）"
+            data-action="content"
+            data-employee="0003"
+          >
+            <div class="silicon-avatar role-ops" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name" data-i18n="employee3Name">海外运营文案官</div>
+              <div class="silicon-meta" data-i18n="employee3Meta">ID: 0003 · 活动 / 帖子 / 推广文案</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@数据洞察分析师（0004）"
+            data-action="data"
+            data-employee="0004"
+          >
+            <div class="silicon-avatar role-analyst" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name" data-i18n="employee4Name">数据洞察分析师</div>
+              <div class="silicon-meta" data-i18n="employee4Meta">ID: 0004 · DAU / 留存 / 转化分析</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@热点抓取师（0005）"
+            data-action="content"
+            data-employee="0005"
+          >
+            <div class="silicon-avatar role-hotspot" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name" data-i18n="employee5Name">热点抓取师</div>
+              <div class="silicon-meta" data-i18n="employee5Meta">ID: 0005 · 热点话题 / 爆款灵感</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="sidebar-history">
+        <div class="history-header" data-i18n="historyHeader">历史任务</div>
+        <ul class="history-list">
+          <li class="history-item">
+            <div class="history-title" data-i18n="history1Title">生成周报（海外市场）</div>
+            <div class="history-meta" data-i18n="history1Meta">今天 · 已完成</div>
+          </li>
+          <li class="history-item">
+            <div class="history-title" data-i18n="history2Title">整理客户名单（亚太）</div>
+            <div class="history-meta" data-i18n="history2Meta">昨天 · 进行中</div>
+          </li>
+          <li class="history-item">
+            <div class="history-title" data-i18n="history3Title">翻译产品说明文档</div>
+            <div class="history-meta" data-i18n="history3Meta">2 天前 · 已完成</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="account-switcher-wrap">
+          <div class="account-list" id="accountList" aria-hidden="true">
+            <button type="button" class="account-option" data-name="小小小筒" data-id="1008611">小小小筒</button>
+            <button type="button" class="account-option" data-name="羊羊羊老大" data-id="1008612">羊羊羊老大</button>
+            <button type="button" class="account-option" data-name="唐又又又" data-id="1008613">唐又又又</button>
+            <button type="button" class="account-option" data-name="木木木夕" data-id="1008614">木木木夕</button>
+          </div>
+          <div class="sidebar-footer-row">
+            <div class="sidebar-user">
+              <div class="user-avatar"></div>
+              <div class="user-info">
+                <div class="user-name" id="currentUserName">小小小筒</div>
+                <div class="user-id" id="currentUserId">ID: 1008611</div>
+              </div>
+            </div>
+            <button type="button" class="account-switch-btn" id="accountSwitchBtn">账号切换</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右栏：问候语 + 对话框 + 功能栏 -->
+    <main class="main-panel">
+      <section class="greeting-section">
+        <h1 class="greeting-text" data-i18n="greetingText">你好呀！有什么我能帮你的吗？</h1>
+      </section>
+
+      <section class="chat-section">
+        <div class="chat-messages"></div>
+        <div class="chat-box">
+          <textarea
+            class="chat-input-single"
+            data-i18n-placeholder="inputPlaceholder"
+            placeholder="可以输入@你的硅基同事 帮你完成工作任务，开始试试吧"
+          ></textarea>
+          <div class="chat-footer">
+            <div class="chat-actions">
+              <button class="chat-action-btn" type="button" data-action="image" data-i18n="btnImage">图片制作</button>
+              <button class="chat-action-btn" type="button" data-action="content" data-i18n="btnContent">内容发布</button>
+              <button class="chat-action-btn" type="button" data-action="data" data-i18n="btnData">数据分析</button>
+            </div>
+            <button class="chat-send-btn" type="button" data-i18n="sendBtn">发送</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="system-link-bar">
+        <div class="system-link-left" data-i18n="systemLinkLeft">
+          将您的系统链接到智能工作台
+        </div>
+        <div class="system-link-right">
+          <div class="system-item">
+            <div class="system-icon lego"></div>
+            <span class="system-name" data-i18n="systemLego">乐高</span>
+          </div>
+          <div class="system-item">
+            <div class="system-icon muse"></div>
+            <span class="system-name" data-i18n="systemMuse">缪斯</span>
+          </div>
+          <div class="system-item">
+            <div class="system-icon bi"></div>
+            <span class="system-name" data-i18n="systemBI">BI</span>
+          </div>
+          <div class="system-item">
+            <div class="system-icon feishu"></div>
+            <span class="system-name" data-i18n="systemFeishu">飞书</span>
+          </div>
+          <button class="system-add-btn" type="button" aria-label="添加系统">+</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 硅基同事介绍弹窗 -->
+  <div class="employee-modal-overlay" id="employeeModal" aria-hidden="true">
+    <div class="employee-modal" role="dialog">
+      <button class="employee-modal-close" type="button" aria-label="关闭" data-i18n="modalClose">×</button>
+      <div class="employee-modal-avatar" id="employeeModalAvatar"></div>
+      <h2 class="employee-modal-title" id="employeeModalTitle"></h2>
+      <p class="employee-modal-id" id="employeeModalId"></p>
+      <div class="employee-modal-section">
+        <h3 class="employee-modal-subtitle" data-i18n="modalScope">工作范围</h3>
+        <p class="employee-modal-text" id="employeeModalScope"></p>
+      </div>
+      <div class="employee-modal-section">
+        <h3 class="employee-modal-subtitle" data-i18n="modalSkills">主要技能</h3>
+        <p class="employee-modal-text" id="employeeModalSkills"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // ---------- 多语言 ----------
+      var I18N = {
+        zh: {
+          appTitle: '海外智能工作台',
+          siliconTitle: '可协作的硅基同事',
+          siliconLink: '全体硅基员工 →',
+          siliconSubtitle: '点选一位同事，一键 @ TA 帮你完成任务',
+          historyHeader: '历史任务',
+          history1Title: '生成周报（海外市场）',
+          history1Meta: '今天 · 已完成',
+          history2Title: '整理客户名单（亚太）',
+          history2Meta: '昨天 · 进行中',
+          history3Title: '翻译产品说明文档',
+          history3Meta: '2 天前 · 已完成',
+          greetingText: '你好呀！有什么我能帮你的吗？',
+          inputPlaceholder: '可以输入@你的硅基同事 帮你完成工作任务，开始试试吧',
+          inputPlaceholderData: '问我任何数据问题，例如：本周日均DAU为什么下降？',
+          btnImage: '图片制作',
+          btnContent: '内容发布',
+          btnData: '数据分析',
+          sendBtn: '发送',
+          systemLinkLeft: '将您的系统链接到智能工作台',
+          systemLego: '乐高',
+          systemMuse: '缪斯',
+          systemBI: 'BI',
+          systemFeishu: '飞书',
+          modalScope: '工作范围',
+          modalSkills: '主要技能',
+          employee1Name: '海报图设计师',
+          employee1Meta: 'ID: 0001 · 海报 / KV / Banner',
+          employee2Name: '专辑标题翻译官',
+          employee2Meta: 'ID: 0002 · 中英 / 多语种标题',
+          employee3Name: '海外运营文案官',
+          employee3Meta: 'ID: 0003 · 活动 / 帖子 / 推广文案',
+          employee4Name: '数据洞察分析师',
+          employee4Meta: 'ID: 0004 · DAU / 留存 / 转化分析',
+          employee5Name: '热点抓取师',
+          employee5Meta: 'ID: 0005 · 热点话题 / 爆款灵感',
+          scope1: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。',
+          skills1: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。',
+          scope2: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。',
+          skills2: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。',
+          scope3: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。',
+          skills3: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。',
+          scope4: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。',
+          skills4: '指标波动归因与异常诊断；留存与转化漏斗分析；可视化结论与报告摘要；与产品、运营对齐口径。',
+          scope5: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。',
+          skills5: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。',
+          modalClose: '×'
+        },
+        en: {
+          appTitle: 'Overseas Smart Workbench',
+          siliconTitle: 'Silicon colleagues you can work with',
+          siliconLink: 'All silicon employees →',
+          siliconSubtitle: 'Pick a colleague and @ them to get tasks done',
+          historyHeader: 'Recent tasks',
+          history1Title: 'Weekly report (overseas)',
+          history1Meta: 'Today · Done',
+          history2Title: 'Customer list (APAC)',
+          history2Meta: 'Yesterday · In progress',
+          history3Title: 'Product doc translation',
+          history3Meta: '2 days ago · Done',
+          greetingText: "Hi! What can I help you with?",
+          inputPlaceholder: 'Type @ to mention a silicon colleague and get tasks done. Try it now.',
+          inputPlaceholderData: 'Ask any data question, e.g. Why did daily DAU drop this week?',
+          btnImage: 'Image',
+          btnContent: 'Content',
+          btnData: 'Data',
+          sendBtn: 'Send',
+          systemLinkLeft: 'Link your systems to the workbench',
+          systemLego: 'Lego',
+          systemMuse: 'Muse',
+          systemBI: 'BI',
+          systemFeishu: 'Feishu',
+          modalScope: 'Scope',
+          modalSkills: 'Skills',
+          employee1Name: 'Poster designer',
+          employee1Meta: 'ID: 0001 · Poster / KV / Banner',
+          employee2Name: 'Title translator',
+          employee2Meta: 'ID: 0002 · EN & multilingual',
+          employee3Name: 'Overseas copywriter',
+          employee3Meta: 'ID: 0003 · Campaigns / posts',
+          employee4Name: 'Data analyst',
+          employee4Meta: 'ID: 0004 · DAU / retention',
+          employee5Name: 'Trend spotter',
+          employee5Meta: 'ID: 0005 · Trends & ideas',
+          scope1: 'Designs album posters, campaign KV, banners and other visual assets; supports multi-platform sizes and styles for overseas markets.',
+          skills1: 'Album posters and single/dual figure composition; marketing assets and multi-size adaptation; style control; collaboration with copy and ops.',
+          scope2: 'Translates and localizes titles and copy for albums, singles and campaigns in EN and other languages; ensures accuracy and local expression.',
+          skills2: 'EN and multilingual titles; music/entertainment terminology; cultural adaptation; slogans and long-form copy.',
+          scope3: 'Writes and optimizes overseas social and campaign copy, posts and descriptions; supports ops cadence.',
+          skills3: 'Campaign/holiday/launch copy; multi-platform posts and hashtags; user-facing and B2B copy; collaboration with design and trends.',
+          scope4: 'Interprets DAU, retention, conversion and other core metrics; delivers insights and actionable recommendations for decision-making.',
+          skills4: 'Metric variance and anomaly diagnosis; retention and funnel analysis; visual reports and summaries; alignment with product and ops.',
+          scope5: 'Tracks hot topics and viral trends; provides ideas and inspiration for ops and content; supports fast follow-up on trends.',
+          skills5: 'Trend and hotspot identification; viral case and topic curation; multi-platform aggregation; collaboration with copy and design.',
+          modalClose: '×'
+        },
+        th: {
+          appTitle: 'เวิร์กเบนช์อัจฉริยะต่างประเทศ',
+          siliconTitle: 'เพื่อนร่วมงานซิลิคอนที่ร่วมงานได้',
+          siliconLink: 'พนักงานซิลิคอนทั้งหมด →',
+          siliconSubtitle: 'เลือกเพื่อนร่วมงาน แล้ว @ เพื่อให้ช่วยทำงาน',
+          historyHeader: 'งานล่าสุด',
+          history1Title: 'รายงานสัปดาห์ (ตลาดต่างประเทศ)',
+          history1Meta: 'วันนี้ · เสร็จแล้ว',
+          history2Title: 'รายชื่อลูกค้า (เอเชียแปซิฟิก)',
+          history2Meta: 'เมื่อวาน · กำลังทำ',
+          history3Title: 'แปลเอกสารผลิตภัณฑ์',
+          history3Meta: '2 วันที่แล้ว · เสร็จแล้ว',
+          greetingText: 'สวัสดี มีอะไรให้ช่วยไหมคะ/ครับ?',
+          inputPlaceholder: 'พิมพ์ @ เพื่อเรียกเพื่อนร่วมงานซิลิคอนมาช่วยทำงาน ลองได้เลย',
+          inputPlaceholderData: 'ถามคำถามข้อมูลได้ เช่น DAU รายวันทำไมลดลงในสัปดาห์นี้?',
+          btnImage: 'ภาพ',
+          btnContent: 'เนื้อหา',
+          btnData: 'ข้อมูล',
+          sendBtn: 'ส่ง',
+          systemLinkLeft: 'เชื่อมระบบของคุณกับเวิร์กเบนช์',
+          systemLego: 'เลโก้',
+          systemMuse: 'มิวส์',
+          systemBI: 'BI',
+          systemFeishu: 'Feishu',
+          modalScope: 'ขอบเขตงาน',
+          modalSkills: 'ทักษะหลัก',
+          employee1Name: 'นักออกแบบโปสเตอร์',
+          employee1Meta: 'ID: 0001 · โปสเตอร์ / KV / Banner',
+          employee2Name: 'นักแปลหัวข้อ',
+          employee2Meta: 'ID: 0002 · อังกฤษ/หลายภาษา',
+          employee3Name: 'นักเขียนคัดลอกต่างประเทศ',
+          employee3Meta: 'ID: 0003 · แคมเปญ / โพสต์',
+          employee4Name: 'นักวิเคราะห์ข้อมูล',
+          employee4Meta: 'ID: 0004 · DAU / การรักษา',
+          employee5Name: 'นักจับเทรนด์',
+          employee5Meta: 'ID: 0005 · เทรนด์และไอเดีย',
+          scope1: 'ออกแบบโปสเตอร์อัลบั้ม KV แคมเปญ แบนเนอร์ และงานวิชวลอื่นๆ รองรับหลายแพลตฟอร์มและสไตล์สำหรับตลาดต่างประเทศ',
+          skills1: 'โปสเตอร์อัลบั้มและองค์ประกอบคนเดียว/คู่; สื่อการตลาดและหลายขนาด; ควบคุมสไตล์; ร่วมงานกับนักเขียนและฝ่ายปฏิบัติการ',
+          scope2: 'แปลและปรับท้องถิ่นหัวข้อและข้อความสำหรับอัลบั้ม ซิงเกิล แคมเปญ เป็นภาษาอังกฤษและภาษาอื่นๆ ให้ถูกต้องและเป็นธรรมชาติ',
+          skills2: 'หัวข้อภาษาอังกฤษและหลายภาษา; ศัพท์ดนตรี/บันเทิง; การปรับวัฒนธรรม; สโลแกนและข้อความยาว',
+          scope3: 'เขียนและปรับปรุงข้อความโซเชียลและแคมเปญต่างประเทศ โพสต์และคำอธิบาย รองรับจังหวะฝ่ายปฏิบัติการ',
+          skills3: 'ข้อความแคมเปญ/เทศกาล/เปิดตัว; โพสต์หลายแพลตฟอร์มและแฮชแท็ก; ข้อความถึงผู้ใช้และ B2B; ร่วมงานกับดีไซน์และเทรนด์',
+          scope4: 'ตีความ DAU การรักษา การแปลงและตัวชี้วัดหลักอื่นๆ นำเสนอข้อมูลและคำแนะนำที่ดำเนินการได้เพื่อการตัดสินใจ',
+          skills4: 'การวินิจฉัยความแปรปรวนและความผิดปกติ; การวิเคราะห์การรักษาและฟันเนล; รายงานภาพและสรุป; ประสานกับผลิตภัณฑ์และฝ่ายปฏิบัติการ',
+          scope5: 'ติดตามหัวข้อร้อนและเทรนด์ไวรัล ให้ไอเดียและแรงบันดาลใจสำหรับฝ่ายปฏิบัติการและเนื้อหา รองรับการติดตามเทรนด์อย่างรวดเร็ว',
+          skills5: 'การระบุเทรนด์และจุดร้อน; การรวบรวมเคสไวรัลและหัวข้อ; การรวมหลายแพลตฟอร์ม; ร่วมงานกับนักเขียนและดีไซน์',
+          modalClose: '×'
+        }
+      };
+      window.I18N = I18N;
+
+      var STORAGE_KEY = 'workbench_lang';
+      function applyLang(lang) {
+        if (!I18N[lang]) lang = 'zh';
+        window.currentLang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n');
+          if (I18N[lang][key] != null) el.textContent = I18N[lang][key];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n-placeholder');
+          if (I18N[lang][key] != null) el.placeholder = I18N[lang][key];
+        });
+        var langSelect = document.getElementById('langSelect');
+        if (langSelect) langSelect.value = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'th' ? 'th' : 'en';
+      }
+
+      var saved = localStorage.getItem(STORAGE_KEY) || 'zh';
+      applyLang(saved);
+      var langSelectEl = document.getElementById('langSelect');
+      if (langSelectEl) {
+        langSelectEl.addEventListener('change', function () {
+          var lang = this.value;
+          localStorage.setItem(STORAGE_KEY, lang);
+          applyLang(lang);
+        });
+      }
+
+      // ---------- 账号切换 ----------
+      var accountList = document.getElementById('accountList');
+      var accountSwitchBtn = document.getElementById('accountSwitchBtn');
+      var currentUserName = document.getElementById('currentUserName');
+      var currentUserId = document.getElementById('currentUserId');
+      if (accountList && accountSwitchBtn && currentUserName && currentUserId) {
+        accountSwitchBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = accountList.classList.toggle('is-open');
+          accountList.setAttribute('aria-hidden', open ? 'false' : 'true');
+        });
+        accountList.querySelectorAll('.account-option').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            currentUserName.textContent = this.getAttribute('data-name');
+            currentUserId.textContent = 'ID: ' + this.getAttribute('data-id');
+            accountList.classList.remove('is-open');
+            accountList.setAttribute('aria-hidden', 'true');
+          });
+        });
+        document.addEventListener('click', function () {
+          accountList.classList.remove('is-open');
+          accountList.setAttribute('aria-hidden', 'true');
+        });
+        accountList.addEventListener('click', function (e) {
+          e.stopPropagation();
+        });
+      }
+
+      // ---------- 原有逻辑 ----------
+      var input = document.querySelector('.chat-input-single');
+      var chatBox = document.querySelector('.chat-box');
+      var sendBtn = document.querySelector('.chat-send-btn');
+      if (!input || !chatBox || !sendBtn) return;
+
+      var defaultPlaceholder = input.getAttribute('placeholder') || '';
+      var analysisBtn;
+      var actionButtons = document.querySelectorAll('.chat-action-btn');
+      var messagesContainer = document.querySelector('.chat-messages');
+
+      var messages = [];
+      // idle：未进入流程；waiting_type：等待确认类型；waiting_details：等待补充细节；done：整理完信息清单
+      var designerFlowState = 'idle';
+      var designerInitialQuestion = '';
+      var designerUserDetails = '';
+      var designerType = ''; // 'album' | 'marketing'
+      // 多语言专辑海报：一次性确认 + 自动检查缺失语言
+      var designerLangCheckAsked = false;
+      var designerMultiLangPresets = [
+        { code: 'zh-CN', name: '简体中文', font: 'Noto Sans SC / Microsoft YaHei' },
+        { code: 'zh-TW', name: '繁体中文', font: 'Noto Sans TC / Microsoft JhengHei' },
+        { code: 'en', name: '英文', font: 'Roboto / Helvetica Neue / Arial' },
+        { code: 'th', name: '泰文', font: 'Noto Sans Thai' },
+        { code: 'ja', name: '日文', font: 'Noto Sans JP' },
+        { code: 'ko', name: '韩文', font: 'Noto Sans KR' },
+        { code: 'vi', name: '越南文', font: 'Noto Sans（Latin Extended）' },
+        { code: 'ms', name: '马来文', font: 'Noto Sans / Roboto' },
+        { code: 'id', name: '印尼文', font: 'Noto Sans / Roboto' },
+        { code: 'es', name: '西班牙文', font: 'Noto Sans / Roboto' },
+        { code: 'pt', name: '葡萄牙文', font: 'Noto Sans / Roboto' },
+        { code: 'ar', name: '阿拉伯文', font: 'Noto Naskh Arabic / Noto Sans Arabic' }
+      ];
+      var greetingSection = document.querySelector('.greeting-section');
+      var hasSentOnce = false;
+
+      actionButtons.forEach(function (btn) {
+        if (btn.getAttribute('data-action') === 'data') {
+          analysisBtn = btn;
+        }
+
+        btn.addEventListener('click', function () {
+          var isActive = btn.classList.contains('is-active');
+          var curLang = window.currentLang || 'zh';
+          var i18n = window.I18N || I18N;
+
+          if (isActive) {
+            btn.classList.remove('is-active');
+            if (btn === analysisBtn) {
+              input.placeholder = i18n[curLang].inputPlaceholder;
+            }
+            return;
+          }
+
+          actionButtons.forEach(function (b) {
+            b.classList.remove('is-active');
+          });
+          btn.classList.add('is-active');
+
+          if (btn === analysisBtn) {
+            input.placeholder = i18n[curLang].inputPlaceholderData;
+          } else {
+            input.placeholder = i18n[curLang].inputPlaceholder;
+          }
+
+          input.focus();
+        });
+      });
+
+      function updateState() {
+        var hasContent = input.value.trim().length > 0;
+        if (hasContent) {
+          chatBox.classList.add('has-content');
+        } else {
+          chatBox.classList.remove('has-content');
+        }
+      }
+
+      input.addEventListener('input', updateState);
+      updateState();
+
+      function renderMessages() {
+        if (!messagesContainer) return;
+        messagesContainer.innerHTML = '';
+
+        messages.forEach(function (msg) {
+          var el = document.createElement('div');
+          el.classList.add('msg');
+          if (msg.role === 'user') {
+            el.classList.add('msg-user');
+          } else if (msg.role === 'designer') {
+            el.classList.add('msg-designer');
+          } else {
+            el.classList.add('msg-assistant');
+          }
+          el.textContent = msg.content;
+          messagesContainer.appendChild(el);
+        });
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function designerFollowupReply() {
+        var typeText;
+        var content;
+
+        if (designerType === 'album') {
+          typeText = '本次需求类型：专辑海报图（支持多语言生产）。';
+          content =
+            '你好，我是 0001 号海报图设计师，会按照“净版底图 + 多语言标题图”的标准流程来帮你做这次专辑海报。\n' +
+            typeText +
+            '\n' +
+            '我们先把关键信息补充完整，你可以按 1～6 的格式简单回复：\n' +
+            '1）专辑 ID（或专辑名称）\n' +
+            '2）底图类型：人工设计 / AI 设计？目前是否已有净版底图，还是需要从零开始设计？\n' +
+            '3）是否需要多语言版本？如果需要，请从以下 12 种语言中勾选需要的：\n' +
+            '   简体中文、繁体中文、英文、泰文、日文、韩文、越南文、马来文、印尼文、西班牙文、葡萄牙文、阿拉伯文\n' +
+            '4）原始标题的语言 + 原始标题文案（例如：中文标题 + 指明源语言是“简体中文”）\n' +
+            '5）是否已有某些语言的标题译文？如有，可以按“语言：标题文案”的格式列出来\n' +
+            '6）（可选）如果你对各语言的折行方式已有想法，也可以按“语言：第 1 行 / 第 2 行 ……”的方式简单写一下\n' +
+            '后续我会基于你一次性提供的信息整理多语言生产清单，如果发现某些语言信息缺失，会再单独提示你补充。';
+        } else {
+          typeText =
+            designerType === 'marketing'
+              ? '本次需求类型：营销素材。'
+              : '本次需求类型：海报设计相关。';
+          content =
+            '你好，我是 0001 号海报图设计师，先帮你确认一下本次海报需求。\n' +
+            typeText +
+            '\n' +
+            '1）海报用途（例如活动宣传、专辑上新、节日祝福）\n' +
+            '2）主要投放平台（例如微博 / 小红书 / 抖音 / 海外社媒）\n' +
+            '3）目标受众和风格偏好（例如年轻潮流、商务专业、可爱治愈）\n' +
+            '你可以按 1、2、3 的形式简单回复。';
+        }
+        messages.push({ role: 'designer', content: content });
+      }
+
+      function designerAskType() {
+        var content =
+          '你好，我是 0001 号海报图设计师。为了更好地帮你设计，先确认一下这次的需求类型：\n' +
+          '1）专辑海报图\n' +
+          '2）营销素材\n' +
+          '你可以回复数字 1 或 2，或者直接说明你的需求类型。';
+        messages.push({ role: 'designer', content: content });
+      }
+
+      function detectDesignerTypeFromText(text) {
+        if (!text) return '';
+        // 剔除掉与“0001号海报图设计师”相关的固定说明文案，再做判断
+        var cleaned = text
+          .replace(/@?海报图设计师（0001）/g, '')
+          .replace(/@?海报图设计师/g, '')
+          .replace(/0001号海报图设计师/g, '')
+          .replace(/0001号/g, '')
+          .replace(/@/g, '');
+
+        if (cleaned.indexOf('专辑') !== -1 || cleaned.indexOf('海报') !== -1) {
+          return 'album';
+        }
+        if (
+          cleaned.indexOf('营销') !== -1 ||
+          cleaned.indexOf('投放') !== -1 ||
+          cleaned.indexOf('广告') !== -1
+        ) {
+          return 'marketing';
+        }
+        return '';
+      }
+
+      function parseDesignerTypeAnswer(text) {
+        var t = text || '';
+        if (
+          t.indexOf('1') !== -1 ||
+          t.indexOf('专辑') !== -1 ||
+          t.indexOf('海报') !== -1
+        ) {
+          return 'album';
+        }
+        if (
+          t.indexOf('2') !== -1 ||
+          t.indexOf('营销') !== -1 ||
+          t.indexOf('素材') !== -1
+        ) {
+          return 'marketing';
+        }
+        return detectDesignerTypeFromText(t);
+      }
+
+      function designerSummaryReply() {
+        if (!designerInitialQuestion && !designerUserDetails) return;
+
+        var summaryHeader = '好的，我帮你整理了一下这次海报的核心信息：\n';
+        var baseSummary =
+          '- 初始需求：' +
+          designerInitialQuestion +
+          '\n' +
+          '- 关键信息补充：' +
+          designerUserDetails +
+          '\n';
+
+        var extra;
+        if (designerType === 'album') {
+          var baseText =
+            (designerUserDetails || '') + '\n' + (designerInitialQuestion || '');
+          var multiText =
+            '结合你的回答，本次将按照“净版底图 + 多语言标题图”的方式来生产专辑海报：\n' +
+            '- 一张净版底图可搭配多种语言的标题图，合成多张专辑海报图\n' +
+            '- 标题部分会围绕：原始语言标题 → 12 种固定语言的多语言标题 → 各语言折行信息 → 对应语言的字体预设 来整理\n' +
+            '\n' +
+            '下面是当前的多语言标题与字体预设清单（可作为设计与前台运营协作的参考）：\n';
+
+          designerMultiLangPresets.forEach(function (preset) {
+            var hasInfo =
+              baseText.indexOf(preset.name) !== -1 ||
+              baseText.indexOf(preset.code) !== -1;
+            var desc = hasInfo
+              ? '已在上方补充信息中给出，可结合具体回复查看标题与折行说明'
+              : '暂未在上方信息中检测到明确的标题/折行说明，后续可补充';
+            multiText +=
+              '* ' +
+              preset.name +
+              '（' +
+              preset.code +
+              '）\n' +
+              '  - 预设字体：' +
+              preset.font +
+              '\n' +
+              '  - 你的标题 / 折行说明：' +
+              desc +
+              '\n';
+          });
+
+          multiText +=
+            '\n你后续可以继续补充或调整任何一项信息（例如增加/减少语种、修改折行），我会基于最新信息更新生产清单。';
+          extra = multiText;
+        } else {
+          extra =
+            '接下来我将根据这些要点进入海报设计“生产状态”，你也可以继续补充或修改。';
+        }
+
+        var summary = summaryHeader + baseSummary + extra;
+        messages.push({ role: 'designer', content: summary });
+
+        var statusText =
+          '海报图设计师 0001 已进入生产状态，正在为你构思海报方案…';
+        messages.push({ role: 'designer', content: statusText });
+      }
+
+      function handleSend() {
+        var text = (input.value || '').trim();
+        if (!text) return;
+
+        messages.push({ role: 'user', content: text });
+
+        var containsDesignerMention =
+          text.indexOf('@海报图设计师') !== -1 ||
+          text.indexOf('@海报图设计师（0001）') !== -1;
+
+        if (designerFlowState === 'idle' && containsDesignerMention) {
+          designerInitialQuestion = text;
+          designerType = detectDesignerTypeFromText(text);
+          designerLangCheckAsked = false;
+          if (!designerType) {
+            designerFlowState = 'waiting_type';
+            designerAskType();
+          } else {
+            designerFlowState = 'waiting_details';
+            designerFollowupReply();
+          }
+        } else if (designerFlowState === 'waiting_type') {
+          // 用户回答了类型选择
+          designerType = parseDesignerTypeAnswer(text) || designerType;
+          designerFlowState = 'waiting_details';
+          designerFollowupReply();
+        } else if (designerFlowState === 'waiting_details') {
+          if (designerType === 'album') {
+            // 专辑海报：一次性确认多语言信息，如果发现缺失再提示补充
+            if (designerUserDetails) {
+              designerUserDetails += '\n' + text;
+            } else {
+              designerUserDetails = text;
+            }
+            var baseText =
+              (designerUserDetails || '') + '\n' + (designerInitialQuestion || '');
+            if (!designerLangCheckAsked) {
+              var missingNames = [];
+              designerMultiLangPresets.forEach(function (preset) {
+                var hasInfo =
+                  baseText.indexOf(preset.name) !== -1 ||
+                  baseText.indexOf(preset.code) !== -1;
+                if (!hasInfo) {
+                  missingNames.push(preset.name);
+                }
+              });
+              if (missingNames.length > 0) {
+                var tip =
+                  '我先按照你提供的信息整理多语言生产清单。\n' +
+                  '目前在你的描述中，以下语言暂未看到明确的标题或折行信息，如也需要为这些语言生成海报，可以继续补充：\n' +
+                  '- ' +
+                  missingNames.join('、') +
+                  '\n' +
+                  '你可以回复：需要哪些语言 + 对应的标题/折行说明；\n' +
+                  '如果其中有不需要生成的语言，也可以直接说明“某某语言不需要”。';
+                messages.push({ role: 'designer', content: tip });
+                designerLangCheckAsked = true;
+              } else {
+                designerSummaryReply();
+                designerFlowState = 'done';
+              }
+            } else {
+              // 第二轮或之后的补充：直接合并进关键信息并给总结
+              designerSummaryReply();
+              designerFlowState = 'done';
+            }
+          } else {
+            designerUserDetails = text;
+            designerSummaryReply();
+            designerFlowState = 'done';
+          }
+        } else {
+          // 普通消息的占位回复（后续可接真实大模型）
+          var echoText = '已收到你的需求，后续我会接入大模型帮你处理。';
+          messages.push({ role: 'assistant', content: echoText });
+        }
+
+        input.value = '';
+        updateState();
+        renderMessages();
+        input.focus();
+
+        if (!hasSentOnce) {
+          hasSentOnce = true;
+          if (greetingSection) {
+            greetingSection.classList.add('hidden');
+          }
+        }
+      }
+
+      sendBtn.addEventListener('click', handleSend);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          // Enter：发送；Ctrl+Enter：换行
+          if (e.ctrlKey || e.metaKey) {
+            // 手动插入换行，避免触发发送
+            e.preventDefault();
+            var start = this.selectionStart;
+            var end = this.selectionEnd;
+            var value = this.value;
+            this.value =
+              value.substring(0, start) + '\n' + value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+            updateState();
+          } else {
+            e.preventDefault();
+            handleSend();
+          }
+        }
+      });
+
+      // 硅基同事卡片交互
+      var colleagueCards = document.querySelectorAll('.silicon-card');
+
+      var employeeIntros = {
+        '0001': {
+          name: '海报图设计师',
+          avatarClass: 'role-designer',
+          scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。',
+          skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。'
+        },
+        '0002': {
+          name: '专辑标题翻译官',
+          avatarClass: 'role-translator',
+          scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。',
+          skills: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。'
+        },
+        '0003': {
+          name: '海外运营文案官',
+          avatarClass: 'role-ops',
+          scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。',
+          skills: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。'
+        },
+        '0004': {
+          name: '数据洞察分析师',
+          avatarClass: 'role-analyst',
+          scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。',
+          skills: '指标波动归因与异常诊断；留存与转化漏斗分析；可视化结论与报告摘要；与产品、运营对齐口径。'
+        },
+        '0005': {
+          name: '热点抓取师',
+          avatarClass: 'role-hotspot',
+          scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。',
+          skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。'
+        }
+      };
+
+      var modal = document.getElementById('employeeModal');
+      var modalTitle = document.getElementById('employeeModalTitle');
+      var modalId = document.getElementById('employeeModalId');
+      var modalAvatar = document.getElementById('employeeModalAvatar');
+      var modalScope = document.getElementById('employeeModalScope');
+      var modalSkills = document.getElementById('employeeModalSkills');
+      var modalClose = document.querySelector('.employee-modal-close');
+
+      function openEmployeeModal(employeeId) {
+        var intro = employeeIntros[employeeId];
+        if (!intro || !modal) return;
+        var curLang = window.currentLang || 'zh';
+        var i18n = window.I18N || I18N;
+        var t = i18n[curLang] || i18n.zh;
+        modalAvatar.className = 'employee-modal-avatar silicon-avatar ' + intro.avatarClass;
+        modalTitle.textContent = t['employee' + employeeId + 'Name'] || intro.name;
+        modalId.textContent = 'ID: ' + employeeId;
+        modalScope.textContent = t['scope' + employeeId] || intro.scope;
+        modalSkills.textContent = t['skills' + employeeId] || intro.skills;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeEmployeeModal() {
+        if (modal) {
+          modal.classList.remove('is-open');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      if (modalClose) modalClose.addEventListener('click', closeEmployeeModal);
+      if (modal) {
+        modal.addEventListener('click', function (e) {
+          if (e.target === modal) closeEmployeeModal();
+        });
+      }
+
+      function insertMention(mention) {
+        if (!mention) return;
+        var current = input.value || '';
+        if (!current.trim()) {
+          input.value = mention + ' ';
+        } else if (current.indexOf(mention) === -1) {
+          if (/\s$/.test(current)) {
+            input.value = current + mention + ' ';
+          } else {
+            input.value = current + ' ' + mention + ' ';
+          }
+        }
+      }
+
+      function moveCursorToEnd() {
+        var len = input.value.length;
+        try {
+          input.setSelectionRange(len, len);
+        } catch (e) {}
+      }
+
+      colleagueCards.forEach(function (card) {
+        var avatar = card.querySelector('.silicon-avatar');
+        if (avatar) {
+          avatar.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var employeeId = card.getAttribute('data-employee');
+            if (employeeId) openEmployeeModal(employeeId);
+          });
+        }
+
+        card.addEventListener('click', function () {
+          var isActive = card.classList.contains('active');
+          var mention = card.getAttribute('data-mention');
+          var actionType = card.getAttribute('data-action');
+
+          // 再次点击已选中卡片：取消选中、恢复默认占位和功能按钮
+          if (isActive) {
+            card.classList.remove('active');
+            actionButtons.forEach(function (b) {
+              b.classList.remove('is-active');
+            });
+            var curLang = window.currentLang || 'zh';
+            input.placeholder = (window.I18N && window.I18N[curLang]) ? window.I18N[curLang].inputPlaceholder : defaultPlaceholder;
+            input.focus();
+            moveCursorToEnd();
+            updateState();
+            return;
+          }
+
+          // 单选：选中当前卡片，取消其他卡片选中态
+          colleagueCards.forEach(function (c) {
+            c.classList.remove('active');
+          });
+          card.classList.add('active');
+
+          // 插入 @ 硅基同事文案
+          insertMention(mention);
+
+          // 根据同事类型联动底部功能按钮和占位文案
+          actionButtons.forEach(function (b) {
+            b.classList.remove('is-active');
+          });
+
+          if (actionType === 'image' || actionType === 'content' || actionType === 'data') {
+            actionButtons.forEach(function (b) {
+              var act = b.getAttribute('data-action');
+              if (actionType === 'image' && act === 'image') {
+                b.classList.add('is-active');
+              } else if (actionType === 'content' && act === 'content') {
+                b.classList.add('is-active');
+              } else if (actionType === 'data' && act === 'data') {
+                b.classList.add('is-active');
+              }
+            });
+          }
+
+          var curLang = window.currentLang || 'zh';
+          var i18n = window.I18N || I18N;
+          if (actionType === 'data') {
+            input.placeholder = i18n[curLang].inputPlaceholderData;
+          } else {
+            input.placeholder = i18n[curLang].inputPlaceholder;
+          }
+
+          input.focus();
+          moveCursorToEnd();
+          updateState();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

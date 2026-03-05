@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>硅基员工页面 - 海外智能工作台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="employees.css" />
+</head>
+<body class="employees-page">
+  <div class="employees-container">
+    <header class="employees-header">
+      <a href="index.html" class="employees-back">← 返回工作台</a>
+      <h1 class="employees-title">硅基员工</h1>
+      <p class="employees-desc">管理已入职、塑造中与许愿中的硅基同事</p>
+    </header>
+
+    <main class="employees-main">
+      <section class="employees-section employees-section-left">
+        <h2 class="employees-section-title">已入职硅基员工</h2>
+        <p class="employees-section-desc">当前可协作的硅基同事，点击头像可查看介绍，在工作台可 @TA 协作。</p>
+        <ul class="employees-card-list">
+          <li class="employees-card">
+            <div class="employees-card-avatar role-designer"></div>
+            <div class="employees-card-info">
+              <span class="employees-card-name">海报图设计师</span>
+              <span class="employees-card-id">ID: 0001</span>
+            </div>
+          </li>
+          <li class="employees-card">
+            <div class="employees-card-avatar role-translator"></div>
+            <div class="employees-card-info">
+              <span class="employees-card-name">专辑标题翻译官</span>
+              <span class="employees-card-id">ID: 0002</span>
+            </div>
+          </li>
+          <li class="employees-card">
+            <div class="employees-card-avatar role-ops"></div>
+            <div class="employees-card-info">
+              <span class="employees-card-name">海外运营文案官</span>
+              <span class="employees-card-id">ID: 0003</span>
+            </div>
+          </li>
+          <li class="employees-card">
+            <div class="employees-card-avatar role-analyst"></div>
+            <div class="employees-card-info">
+              <span class="employees-card-name">数据洞察分析师</span>
+              <span class="employees-card-id">ID: 0004</span>
+            </div>
+          </li>
+          <li class="employees-card">
+            <div class="employees-card-avatar role-hotspot"></div>
+            <div class="employees-card-info">
+              <span class="employees-card-name">热点抓取师</span>
+              <span class="employees-card-id">ID: 0005</span>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <div class="employees-right">
+      <section class="employees-section">
+        <h2 class="employees-section-title">正在塑造的硅基员工</h2>
+        <p class="employees-section-desc">正在训练与配置中的硅基同事，上线后将出现在工作台可协作列表。</p>
+        <div class="employees-empty">
+          <p>暂无正在塑造的员工</p>
+          <p class="employees-empty-hint">新角色上线后会在此展示进度</p>
+        </div>
+      </section>
+
+      <section class="employees-section">
+        <h2 class="employees-section-title">许愿我希望增加的硅基员工</h2>
+        <p class="employees-section-desc">写下你希望新增的硅基员工角色或能力，我们会纳入规划。</p>
+        <div class="employees-wish">
+          <textarea
+            class="employees-wish-input"
+            placeholder="例如：周报撰写员、会议纪要整理师、竞品监测员…"
+            rows="4"
+          ></textarea>
+          <button type="button" class="employees-wish-btn">提交许愿</button>
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
