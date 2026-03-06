@@ -348,6 +348,35 @@ body {
   color: var(--color-text-main);
 }
 
+.employee-modal-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.employee-modal-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.employee-modal-btn-train {
+  color: #fff;
+  background-color: var(--color-primary);
+  border: none;
+}
+
+.employee-modal-btn-train:hover {
+  background-color: #1e9b62;
+  color: #fff;
+}
+
 /* 左栏：历史任务 */
 .sidebar-history {
   flex: 1;
