@@ -14,6 +14,13 @@
   margin-bottom: 32px;
 }
 
+.employees-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .employees-back {
   display: inline-block;
   margin-bottom: 12px;
@@ -42,7 +49,6 @@
 }
 
 .employees-viewer {
-  margin-top: 12px;
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
@@ -277,6 +283,10 @@
 @media (max-width: 768px) {
   .employees-container {
     padding: 24px 20px 36px;
+  }
+
+  .employees-title {
+    margin-bottom: 0;
   }
 
   .employees-main {

@@ -217,6 +217,16 @@ body {
   background-image: url("images/avatar-horse-designer.png");
 }
 
+.silicon-avatar.role-collab {
+  background-color: #6366f1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .silicon-info {
   flex: 1;
   margin-left: 8px;
@@ -999,10 +1009,53 @@ body {
 }
 
 .msg-designer,
-.msg-assistant {
+.msg-assistant,
+.msg-collab {
   align-self: flex-start;
   background-color: #f5f6f7;
   border-radius: 0 12px 12px 12px;
+}
+
+.msg-im-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.msg-im-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.msg-im-avatar--designer {
+  background-image: url("images/avatar-horse-designer.png");
+}
+
+.msg-im-avatar--guoxiaoxi {
+  background-image: url("images/郭晓曦.png");
+}
+
+.msg-im-avatar--wangdi {
+  background-image: url("images/王地.png");
+}
+
+.msg-im-avatar--shenhong {
+  background-image: url("images/沈泓.png");
+}
+
+.msg-im-avatar--tangshuang {
+  background-image: url("images/唐双.png");
+}
+
+.msg-im-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-main);
 }
 
 /* 单一输入框 */

@@ -134,6 +134,8 @@
             </div>
             <button class="silicon-mention-btn" type="button">@TA</button>
           </div>
+
+          <!-- 协作角色（王地 / 沈泓 / 郭晓曦 / 唐双）不在左侧列表展示，仅通过 @ 触发参与对话 -->
         </div>
       </section>
 
@@ -1509,6 +1511,13 @@
         return (t.indexOf('TV端数据') !== -1 || t.indexOf('TV') !== -1) && (t.indexOf('周报') !== -1 || t.indexOf('周报数据') !== -1);
       }
 
+      function isAnalystNewDramaDataRequest(text) {
+        if (!text || text.indexOf('数据洞察分析师') === -1) return false;
+        var t = text.replace(/\s+/g, ' ');
+        if (t.indexOf('TV端数据') === -1 && t.indexOf('TV') === -1) return false;
+        return t.indexOf('新剧表现不佳') !== -1 && (t.indexOf('具体数据拆解') !== -1 || t.indexOf('数据拆解') !== -1);
+      }
+
       function buildTVWeeklyFirstResponse() {
         var cp = TV_WEEKLY_MOCK_DATA.comparePeriod;
         var d = TV_WEEKLY_MOCK_DATA.summary;
@@ -2131,7 +2140,36 @@
             el.textContent = msg.content;
           } else if (msg.role === 'designer') {
             el.classList.add('msg-designer');
-            if (idx === messages.length - 1) {
+            var dHeader = document.createElement('div');
+            dHeader.className = 'msg-im-header';
+            var dAvatar = document.createElement('div');
+            dAvatar.className = 'msg-im-avatar msg-im-avatar--designer';
+            var dName = document.createElement('div');
+            dName.className = 'msg-im-name';
+            dName.textContent = '海报图设计师';
+            dHeader.appendChild(dAvatar);
+            dHeader.appendChild(dName);
+            el.appendChild(dHeader);
+            if (msg.hasPreviewButton) {
+              var dWrap = document.createElement('div');
+              dWrap.className = 'analysis-report typewriter-wrap';
+              el.appendChild(dWrap);
+              if (idx === messages.length - 1) {
+                runTypewriterText(dWrap, msg.content || '', TYPEWRITER_MS, function () {
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+              } else {
+                dWrap.textContent = msg.content || '';
+              }
+              var dPreviewBtn = document.createElement('button');
+              dPreviewBtn.type = 'button';
+              dPreviewBtn.className = 'preview-btn';
+              dPreviewBtn.textContent = '预览';
+              dPreviewBtn.addEventListener('click', function () {
+                openPreviewModal(msg);
+              });
+              el.appendChild(dPreviewBtn);
+            } else if (idx === messages.length - 1) {
               var twWrap = document.createElement('div');
               twWrap.className = 'analysis-report typewriter-wrap';
               el.appendChild(twWrap);
@@ -2139,7 +2177,10 @@
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
               });
             } else {
-              el.textContent = msg.content;
+              var plain = document.createElement('div');
+              plain.className = 'analysis-report';
+              plain.textContent = msg.content || '';
+              el.appendChild(plain);
             }
           } else {
             el.classList.add('msg-assistant');
@@ -2336,7 +2377,54 @@
                 el.appendChild(cardsWrap);
               }
             } else {
-              if (msg.hotspotCards || msg.batchActions || msg.refinementPrompt || msg.scheduledTaskConfirm || msg.exportFeishuCsv || msg.hotspotMenu || msg.exportFollowUp) {
+              if (msg.flowId === 'zhuyu' && msg.speakerName) {
+                el.classList.add('msg-collab');
+                var collabHeader = document.createElement('div');
+                collabHeader.className = 'msg-im-header';
+                var collabAvatar = document.createElement('div');
+                var avatarCls = 'msg-im-avatar ';
+                if (msg.speakerName === '海报图设计师') avatarCls += 'msg-im-avatar--designer';
+                else if (msg.speakerName === '郭晓曦') avatarCls += 'msg-im-avatar--guoxiaoxi';
+                else if (msg.speakerName === '王地') avatarCls += 'msg-im-avatar--wangdi';
+                else if (msg.speakerName === '沈泓') avatarCls += 'msg-im-avatar--shenhong';
+                else if (msg.speakerName === '唐双') avatarCls += 'msg-im-avatar--tangshuang';
+                else avatarCls += 'msg-im-avatar--designer';
+                collabAvatar.className = avatarCls;
+                var collabName = document.createElement('div');
+                collabName.className = 'msg-im-name';
+                collabName.textContent = msg.speakerName;
+                collabHeader.appendChild(collabAvatar);
+                collabHeader.appendChild(collabName);
+                el.appendChild(collabHeader);
+
+                var collabBody = document.createElement('div');
+                collabBody.className = 'analysis-report typewriter-wrap';
+                el.appendChild(collabBody);
+                var isLastZhuyu = idx === messages.length - 1;
+                if (isLastZhuyu) {
+                  runTypewriterText(collabBody, msg.content || '', TYPEWRITER_MS, function () {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    if (window.zhuyuFlowPending && window.zhuyuFlowPending.length > 0) {
+                      var peekNext = window.zhuyuFlowPending[0];
+                      var delayMs = peekNext && peekNext.speakerName !== msg.speakerName ? 5000 : 0;
+                      setTimeout(function () {
+                        var next = window.zhuyuFlowPending.shift();
+                        if (!next) return;
+                        messages.push({
+                          role: 'assistant',
+                          flowId: 'zhuyu',
+                          flowStep: next.flowStep,
+                          speakerName: next.speakerName,
+                          content: next.content
+                        });
+                        renderMessages();
+                      }, delayMs);
+                    }
+                  });
+                } else {
+                  collabBody.textContent = msg.content || '';
+                }
+              } else if (msg.hotspotCards || msg.batchActions || msg.refinementPrompt || msg.scheduledTaskConfirm || msg.exportFeishuCsv || msg.hotspotMenu || msg.exportFollowUp) {
                 var hotspotTextWrap = document.createElement('div');
                 hotspotTextWrap.className = 'msg-text' + (msg.copyType === 'xhs' ? ' msg-text--copy-xhs' : '');
                 hotspotTextWrap.style.whiteSpace = 'pre-wrap';
@@ -2730,15 +2818,18 @@
       }
 
       function getFixedRoleReply(text) {
-        var t = text || '';
-        if (t.indexOf('@线上检查助手') !== -1) {
-          if (
+        var t = (text || '').replace(/\s+/g, ' ');
+        var hasChecker = t.indexOf('@线上检查助手') !== -1 || t.indexOf('线上检查助手（0006）') !== -1;
+        if (hasChecker) {
+          var isAskCurrentContent =
             t.indexOf('当前 TV 跨端导流素材是什么内容') !== -1 ||
-            (t.indexOf('跨端导流素材') !== -1 && t.indexOf('什么内容') !== -1)
-          ) {
+            t.indexOf('当前TV跨端导流素材是什么内容') !== -1 ||
+            (t.indexOf('跨端导流素材') !== -1 && t.indexOf('什么内容') !== -1) ||
+            (t.indexOf('当前') !== -1 && t.indexOf('跨端导流') !== -1 && (t.indexOf('素材') !== -1 || t.indexOf('内容') !== -1));
+          if (isAskCurrentContent) {
             return {
               role: 'assistant',
-              content: '当前为\"大生意人\"。',
+              content: '当前为『大生意人』',
               hasPreviewButton: true,
               previewImageUrl: 'images/大生意人.jpg',
               previewTitle: '「大生意人」TV 跨端导流图片预览'
@@ -2764,7 +2855,10 @@
         ) {
           return {
             role: 'assistant',
-            content: '已接收配置需求，并完成MBA端导流入口图片配置。'
+            content: '配置完成',
+            hasPreviewButton: true,
+            previewImageUrl: 'images/成何体统.jpg',
+            previewTitle: '《成何体统》配置图预览'
           };
         }
         return null;
@@ -2790,8 +2884,77 @@
           text.indexOf('@海报图设计师') !== -1 ||
           text.indexOf('@海报图设计师（0001）') !== -1;
 
-        // 数据洞察分析师 TV 端周报场景
+        // 多角色协作流程：制作逐玉的海报图（发起者全程可见进度，逐条逐字输出）
+        var isZhuyuPosterFlow =
+          containsDesignerMention &&
+          (text.indexOf('制作逐玉的海报图') !== -1 || (text.indexOf('逐玉') !== -1 && text.indexOf('海报图') !== -1));
+        if (isZhuyuPosterFlow) {
+          var zhuyuFlowSteps = [
+            { speakerName: '海报图设计师', content: '已检查内容的多语言标题、折行信息，发现越南语缺少折行信息，@郭晓曦 请补充' },
+            { speakerName: '郭晓曦', content: '@海报图设计师 已补充' },
+            { speakerName: '海报图设计师', content: '当前内容为 S 级内容，按照约定需要人工设计海报图，@王地 请安排设计同学' },
+            { speakerName: '王地', content: '@沈泓 进行设计' },
+            { speakerName: '沈泓', content: '@海报图设计师 已设计完成，百度云盘地址：https://pan.baidu.com/s/1k2F8d7G9hJ0K1L2M3N4O5P6Q7R8S9T 提取码：z8x7' },
+            { speakerName: '海报图设计师', content: '已将云盘内的图片上传，并 @唐双 进行审核' },
+            { speakerName: '唐双', content: '审核完成' }
+          ];
+          messages.push({
+            role: 'assistant',
+            flowId: 'zhuyu',
+            flowStep: 1,
+            speakerName: zhuyuFlowSteps[0].speakerName,
+            content: zhuyuFlowSteps[0].content
+          });
+          window.zhuyuFlowPending = zhuyuFlowSteps.slice(1).map(function (s, i) {
+            return { flowStep: i + 2, speakerName: s.speakerName, content: s.content };
+          });
+
+          input.value = '';
+          updateState();
+          renderMessages();
+          input.focus();
+          if (!hasSentOnce) {
+            hasSentOnce = true;
+            if (greetingSection) greetingSection.classList.add('hidden');
+          }
+          return;
+        }
+
+        // 特定口令：海报图设计师制作《成何体统》TV 跨端导流图（两段式回复）
+        var isChengheTVCrossGuidePoster =
+          containsDesignerMention &&
+          (text.indexOf('制作成何体统的TV跨端导流图片') !== -1 ||
+            (text.indexOf('成何体统') !== -1 &&
+              text.toUpperCase().indexOf('TV') !== -1 &&
+              text.indexOf('跨端导流') !== -1 &&
+              text.indexOf('制作') !== -1));
+        if (isChengheTVCrossGuidePoster) {
+          messages.push({ role: 'designer', content: '正在制作中，请稍后' });
+          messages.push({
+            role: 'designer',
+            content: '制作完成',
+            hasPreviewButton: true,
+            previewImageUrl: 'images/成何体统配置图.jpg',
+            previewTitle: '《成何体统》TV 跨端导流图片预览'
+          });
+
+          input.value = '';
+          updateState();
+          renderMessages();
+          input.focus();
+
+          if (!hasSentOnce) {
+            hasSentOnce = true;
+            if (greetingSection) {
+              greetingSection.classList.add('hidden');
+            }
+          }
+          return;
+        }
+
+        // 数据洞察分析师 TV 端周报场景（仅一条分析回复，逐字打出；不触发第二条 echo）
         var isAnalystTVWeekly = isTVWeeklyReportRequest(text);
+        var isAnalystNewDrama = isAnalystNewDramaDataRequest(text);
         if (isAnalystTVWeekly) {
           lastAnalystReportType = 'tv_weekly';
           var res = buildTVWeeklyFirstResponse();
@@ -2805,14 +2968,18 @@
             chartDataBar: res.chartDataBar
           });
         } else if (
-          lastAnalystReportType === 'tv_weekly' &&
-          text.indexOf('@海报图设计师') === -1 &&
-          text.indexOf('@海报图设计师（0001）') === -1
+          isAnalystNewDrama ||
+          (lastAnalystReportType === 'tv_weekly' &&
+            (text.indexOf('@数据洞察分析师') !== -1 || text.indexOf('数据洞察分析师（0004）') !== -1) &&
+            text.indexOf('@海报图设计师') === -1 &&
+            text.indexOf('@海报图设计师（0001）') === -1)
         ) {
+          if (isAnalystNewDrama) lastAnalystReportType = 'tv_weekly';
           var cleanQ = text.replace(
             /@数据洞察分析师（0004）\s*TV端数据\s*/g,
             ''
           ).trim() || text;
+          if (!cleanQ) cleanQ = '新剧表现不佳具体数据拆解';
           var followRes = buildTVWeeklyFollowUp(cleanQ);
           messages.push({
             role: 'assistant',
@@ -2822,9 +2989,7 @@
             chartLabel: followRes.chartLabel,
             chartImageUrl: followRes.chartImageUrl
           });
-        }
-
-        if (containsHotspotMention || flow0005 !== 'idle') {
+        } else if (containsHotspotMention || flow0005 !== 'idle') {
           var hotspotReply = handleHotspotQuery0005(text);
           var hotspotContent = typeof hotspotReply === 'object' && hotspotReply.text !== undefined ? hotspotReply.text : hotspotReply;
           var hotspotPayload = { role: 'assistant', content: hotspotContent };

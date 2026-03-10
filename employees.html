@@ -11,9 +11,11 @@
   <div class="employees-container">
     <header class="employees-header">
       <a href="index.html" class="employees-back">← 返回工作台</a>
-      <h1 class="employees-title">硅基员工</h1>
+      <div class="employees-title-row">
+        <h1 class="employees-title">硅基员工</h1>
+        <div class="employees-viewer" id="employeesViewer"></div>
+      </div>
       <p class="employees-desc">按出厂阶段查看硅基员工，并根据当前账号角色控制可见范围。</p>
-      <div class="employees-viewer" id="employeesViewer"></div>
       <div class="employees-header-links">
         <a href="org-structure.html">查看碳硅协同组织架构 →</a>
       </div>
@@ -73,13 +75,13 @@
         ],
         training: [
           { name: '短剧投放优化师', id: 'TR001', avatarClass: 'role-ops' },
-          { name: '多语审核助手', id: 'TR002', avatarClass: 'role-translator' }
+          { name: '多语审核助手', id: 'TR002', avatarClass: 'role-translator' },
+          { name: '剧本评估员', id: 'PL004', avatarClass: 'role-analyst', desc: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。' }
         ],
         factory: [
           { name: '周报撰写员', id: 'PL001', avatarClass: 'role-analyst' },
           { name: '会议纪要整理师', id: 'PL002', avatarClass: 'role-designer' },
-          { name: '爬虫助手', id: 'PL003', avatarClass: 'role-hotspot', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' },
-          { name: '剧本评估员', id: 'PL004', avatarClass: 'role-analyst', desc: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。' }
+          { name: '爬虫助手', id: 'PL003', avatarClass: 'role-hotspot', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' }
         ]
       };
 
