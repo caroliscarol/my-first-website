@@ -41,6 +41,21 @@
   color: var(--color-text-sub);
 }
 
+.employees-header-links {
+  margin-top: 8px;
+}
+
+.employees-header-links a {
+  font-size: 13px;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-right: 12px;
+}
+
+.employees-header-links a:hover {
+  text-decoration: underline;
+}
+
 .employees-main {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -135,6 +150,14 @@
   background-image: url("images/avatar-horse-hotspot.png");
 }
 
+.employees-card-avatar.role-checker {
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.employees-card-avatar.role-config {
+  background-image: url("images/avatar-horse-designer.png");
+}
+
 .employees-card-info {
   display: flex;
   flex-direction: column;
@@ -216,4 +239,39 @@
 .employees-wish-btn:hover {
   background-color: #1e9b62;
   box-shadow: 0 2px 8px rgba(34, 181, 115, 0.35);
+}
+
+/* 碳硅协同组织架构页面 */
+.org-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.org-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.org-block {
+  border-radius: 10px;
+  border: 1px dashed var(--color-border);
+  padding: 12px 14px;
+  background-color: #fafafa;
+}
+
+.org-block-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.org-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--color-text-sub);
+  line-height: 1.6;
 }

@@ -104,6 +104,34 @@
             </div>
             <button class="silicon-mention-btn" type="button">@TA</button>
           </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@线上检查助手（0006）"
+            data-action="content"
+            data-employee="0006"
+          >
+            <div class="silicon-avatar role-checker" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name">线上检查助手</div>
+              <div class="silicon-meta">ID: 0006 · 线上配置 / 素材检查</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
+
+          <div
+            class="silicon-card"
+            data-mention="@配置助手（0007）"
+            data-action="content"
+            data-employee="0007"
+          >
+            <div class="silicon-avatar role-config" title="查看介绍"></div>
+            <div class="silicon-info">
+              <div class="silicon-name">配置助手</div>
+              <div class="silicon-meta">ID: 0007 · 导流图 / 入口配置</div>
+            </div>
+            <button class="silicon-mention-btn" type="button">@TA</button>
+          </div>
         </div>
       </section>
 
@@ -128,13 +156,13 @@
       <div class="sidebar-footer">
         <div class="account-switcher-wrap">
           <div class="account-list" id="accountList" aria-hidden="true">
-            <button type="button" class="account-option" data-name="小小小筒" data-id="1008611">小小小筒</button>
-            <button type="button" class="account-option" data-name="羊羊羊老大" data-id="1008612">羊羊羊老大</button>
-            <button type="button" class="account-option" data-name="唐又又又" data-id="1008613">唐又又又</button>
-            <button type="button" class="account-option" data-name="木木木夕" data-id="1008614">木木木夕</button>
-            <button type="button" class="account-option" data-name="耶耶耶耶" data-id="1008615">耶耶耶耶</button>
-            <button type="button" class="account-option" data-name="蕾佳音音" data-id="1008616">蕾佳音音</button>
-            <button type="button" class="account-option" data-name="王二二二" data-id="1008617">王二二二</button>
+            <button type="button" class="account-option" data-name="小小小筒" data-id="1008611">小小小筒（管理员）</button>
+            <button type="button" class="account-option" data-name="羊羊羊老大" data-id="1008612">羊羊羊老大（管理者）</button>
+            <button type="button" class="account-option" data-name="唐又又又" data-id="1008613">唐又又又（使用者）</button>
+            <button type="button" class="account-option" data-name="木木木夕" data-id="1008614">木木木夕（使用者）</button>
+            <button type="button" class="account-option" data-name="耶耶耶耶" data-id="1008615">耶耶耶耶（管理者）</button>
+            <button type="button" class="account-option" data-name="蕾佳音音" data-id="1008616">蕾佳音音（训练者）</button>
+            <button type="button" class="account-option" data-name="王二二二" data-id="1008617">王二二二（训练者）</button>
           </div>
           <div class="sidebar-footer-row">
             <div class="sidebar-user">
@@ -159,6 +187,19 @@
       <section class="chat-section">
         <div class="chat-messages"></div>
         <div class="chat-box">
+          <div class="prompt-cards-wrap" id="promptCardsWrap" aria-hidden="true">
+            <div class="prompt-cards-group" data-group="root">
+              <button type="button" class="prompt-card" data-prompt="promptOverseas" data-i18n="promptOverseas">了解海外站数据</button>
+              <button type="button" class="prompt-card" data-prompt="promptTV" data-i18n="promptTV">TV端数据</button>
+              <button type="button" class="prompt-card" data-prompt="promptMicroDrama" data-i18n="promptMicroDrama">微剧数据</button>
+              <button type="button" class="prompt-card" data-prompt="promptSeedPlanting" data-i18n="promptSeedPlanting">种草数据</button>
+            </div>
+            <div class="prompt-cards-group" data-group="tv">
+              <button type="button" class="prompt-card" data-prompt="promptTVWeekly" data-i18n="promptTVWeekly">周报数据</button>
+              <button type="button" class="prompt-card" data-prompt="promptTVAnomaly" data-i18n="promptTVAnomaly">近期异常波动</button>
+              <button type="button" class="prompt-card" data-prompt="promptTVChannel" data-i18n="promptTVChannel">重点渠道数据情况</button>
+            </div>
+          </div>
           <textarea
             class="chat-input-single"
             data-i18n-placeholder="inputPlaceholder"
@@ -223,6 +264,17 @@
     </div>
   </div>
 
+  <!-- TV 跨端导流图片预览弹层 -->
+  <div class="preview-modal-overlay" id="previewModal" aria-hidden="true">
+    <div class="preview-modal" role="dialog">
+      <button class="preview-modal-close" type="button" aria-label="关闭">×</button>
+      <div class="preview-modal-body">
+        <p class="preview-modal-title">TV 跨端导流图片预览</p>
+        <div class="preview-modal-placeholder"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       // ---------- 多语言 ----------
@@ -253,6 +305,15 @@
           systemFeishu: '飞书',
           modalScope: '工作范围',
           modalSkills: '主要技能',
+          promptQuestionTitle: '提示问题',
+          promptQuestionSubtitle: '选择一个问题快速发起咨询',
+          promptOverseas: '了解海外站数据',
+          promptTV: 'TV端数据',
+          promptMicroDrama: '微剧数据',
+          promptSeedPlanting: '种草数据',
+          promptTVWeekly: '周报数据',
+          promptTVAnomaly: '近期异常波动',
+          promptTVChannel: '重点渠道数据情况',
           employee1Name: '海报图设计师',
           employee1Meta: 'ID: 0001 · 海报 / KV / Banner',
           employee2Name: '专辑标题翻译官',
@@ -301,6 +362,15 @@
           systemFeishu: 'Feishu',
           modalScope: 'Scope',
           modalSkills: 'Skills',
+          promptQuestionTitle: 'Suggested questions',
+          promptQuestionSubtitle: 'Pick one to start your data inquiry',
+          promptOverseas: 'Overseas site data',
+          promptTV: 'TV terminal data',
+          promptMicroDrama: 'Micro drama data',
+          promptSeedPlanting: 'Seed planting data',
+          promptTVWeekly: 'Weekly report data',
+          promptTVAnomaly: 'Recent anomalies',
+          promptTVChannel: 'Key channel performance',
           employee1Name: 'Poster designer',
           employee1Meta: 'ID: 0001 · Poster / KV / Banner',
           employee2Name: 'Title translator',
@@ -349,6 +419,15 @@
           systemFeishu: 'Feishu',
           modalScope: 'ขอบเขตงาน',
           modalSkills: 'ทักษะหลัก',
+          promptQuestionTitle: 'คำถามแนะนำ',
+          promptQuestionSubtitle: 'เลือกคำถามเพื่อเริ่มสอบถามข้อมูล',
+          promptOverseas: 'ข้อมูลเว็บต่างประเทศ',
+          promptTV: 'ข้อมูลทีวี',
+          promptMicroDrama: 'ข้อมูลไมโครดราม่า',
+          promptSeedPlanting: 'ข้อมูลการปลูกเมล็ด',
+          promptTVWeekly: 'ข้อมูลรายงานประจำสัปดาห์',
+          promptTVAnomaly: 'ความผันผวนผิดปกติช่วงล่าสุด',
+          promptTVChannel: 'สถานะข้อมูลช่องทางหลัก',
           employee1Name: 'นักออกแบบโปสเตอร์',
           employee1Meta: 'ID: 0001 · โปสเตอร์ / KV / Banner',
           employee2Name: 'นักแปลหัวข้อ',
@@ -466,6 +545,83 @@
       var greetingSection = document.querySelector('.greeting-section');
       var hasSentOnce = false;
 
+      // ---------- 数据洞察：TV 端周报模拟数据 ----------
+      var lastAnalystReportType = null;
+      var TV_WEEKLY_MOCK_DATA = {
+        period: '2026.2.20-2.26',
+        comparePeriod: '2.13-2.19',
+        summary: {
+          dau: 625371,
+          dauWow: -6.28,
+          playDurationHours: 822164,
+          playDurationWow: -1.40,
+          dauShare: 26.46,
+          dauShareWow: 0.92,
+          playDurationShare: 36.75,
+          playDurationShareWow: -0.18
+        }
+      };
+
+      function isTVWeeklyReportRequest(text) {
+        if (!text || text.indexOf('数据洞察分析师') === -1) return false;
+        var t = text.replace(/\s+/g, ' ');
+        return (
+          (t.indexOf('TV端数据') !== -1 || t.indexOf('TV') !== -1) &&
+          (t.indexOf('周报') !== -1 || t.indexOf('周报数据') !== -1)
+        );
+      }
+
+      function buildTVWeeklyFirstResponse() {
+        var cp = TV_WEEKLY_MOCK_DATA.comparePeriod;
+        var d = TV_WEEKLY_MOCK_DATA.summary;
+        var intro =
+          '【本周 TV 端数据表现概览】DAU 环比明显下滑，核心诱因为头部剧集收官、新上剧集表现偏弱，内容供给断层导致拉新与留存乏力；播放时长降幅远低于 DAU，靠存量用户单内容消费时长拉长缓冲跌幅，全地区、全厂商渠道 DAU 同步下滑，无明显逆势区域。\n\n';
+        var dataCardBlock =
+          '【爱奇艺 TV 端周度核心数据（' +
+          (cp || '2.20-2.26') +
+          '】\n' +
+          '· 日均活跃用户（DAU）：' +
+          (d && d.dau ? d.dau.toLocaleString() : '—') +
+          ' | 环比↓' +
+          (d && d.dauWow != null ? Math.abs(d.dauWow).toFixed(2) : '—') +
+          '%\n' +
+          '· 总播放时长：' +
+          (d && d.playDurationHours
+            ? d.playDurationHours.toLocaleString()
+            : '—') +
+          ' 小时 | 环比↓' +
+          (d && d.playDurationWow != null
+            ? Math.abs(d.playDurationWow).toFixed(2)
+            : '—') +
+          '%\n' +
+          '· TV 端 DAU 全平台占比：' +
+          (d && d.dauShare != null ? d.dauShare.toFixed(2) : '—') +
+          '% | 环比↑' +
+          (d && d.dauShareWow != null ? d.dauShareWow.toFixed(2) : '—') +
+          'PP\n' +
+          '· TV 端播放时长全平台占比：' +
+          (d && d.playDurationShare != null
+            ? d.playDurationShare.toFixed(2)
+            : '—') +
+          '% | 环比↓' +
+          (d && d.playDurationShareWow != null
+            ? Math.abs(d.playDurationShareWow).toFixed(2)
+            : '—') +
+          'PP\n';
+        var tail =
+          '如果你需要更细的拆解（例如按地区、按厂商、按内容），可以继续在当前对话里提问，比如：“按地区拆一下 DAU 下滑情况” 或 “看一下重点厂商渠道的变化”。';
+        return intro + dataCardBlock + '\n' + tail;
+      }
+
+      // BI 场景：提示卡片 & 数据场景助手
+      var promptCardsWrap = document.getElementById('promptCardsWrap');
+      var promptRootGroup = promptCardsWrap && promptCardsWrap.querySelector('.prompt-cards-group[data-group="root"]');
+      var promptTvGroup = promptCardsWrap && promptCardsWrap.querySelector('.prompt-cards-group[data-group="tv"]');
+      var promptCards = promptCardsWrap && promptCardsWrap.querySelectorAll('.prompt-card');
+      var dataAnalystMention = '@数据洞察分析师（0004）';
+      var hasShownPromptForAt = false;
+      var currentPromptGroup = 'root';
+
       actionButtons.forEach(function (btn) {
         if (btn.getAttribute('data-action') === 'data') {
           analysisBtn = btn;
@@ -506,10 +662,58 @@
         } else {
           chatBox.classList.remove('has-content');
         }
+        updatePromptCardsVisibility();
       }
 
       input.addEventListener('input', updateState);
       updateState();
+
+      function showPromptGroup(name) {
+        currentPromptGroup = name;
+        if (promptRootGroup) {
+          if (name === 'root') {
+            promptRootGroup.classList.add('is-active');
+          } else {
+            promptRootGroup.classList.remove('is-active');
+          }
+        }
+        if (promptTvGroup) {
+          if (name === 'tv') {
+            promptTvGroup.classList.add('is-active');
+          } else {
+            promptTvGroup.classList.remove('is-active');
+          }
+        }
+      }
+
+      function updatePromptCardsVisibility() {
+        if (!promptCardsWrap) return;
+        var hasDataAnalyst = input.value.indexOf(dataAnalystMention) !== -1;
+        if (hasDataAnalyst && !hasShownPromptForAt) hasShownPromptForAt = true;
+        if (hasDataAnalyst && hasShownPromptForAt) {
+          promptCardsWrap.classList.add('is-visible');
+          promptCardsWrap.setAttribute('aria-hidden', 'false');
+          showPromptGroup('root');
+        } else {
+          promptCardsWrap.classList.remove('is-visible');
+          promptCardsWrap.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      function applyDataAnalystState() {
+        var card = document.querySelector('.silicon-card[data-employee="0004"]');
+        if (card) {
+          colleagueCards.forEach(function (c) { c.classList.remove('active'); });
+          card.classList.add('active');
+        }
+        actionButtons.forEach(function (b) {
+          b.classList.remove('is-active');
+          if (b.getAttribute('data-action') === 'data') b.classList.add('is-active');
+        });
+        var curLang = window.currentLang || 'zh';
+        var i18n = window.I18N || I18N;
+        input.placeholder = i18n[curLang].inputPlaceholderData;
+      }
 
       function renderMessages() {
         if (!messagesContainer) return;
@@ -525,11 +729,54 @@
           } else {
             el.classList.add('msg-assistant');
           }
-          el.textContent = msg.content;
+          if (msg.hasPreviewButton) {
+            var textWrap = document.createElement('div');
+            textWrap.textContent = msg.content || '';
+            el.appendChild(textWrap);
+            var previewBtn = document.createElement('button');
+            previewBtn.type = 'button';
+            previewBtn.className = 'preview-btn';
+            previewBtn.textContent = '预览';
+            previewBtn.addEventListener('click', function () {
+              openPreviewModal(msg);
+            });
+            el.appendChild(previewBtn);
+          } else {
+            el.textContent = msg.content;
+          }
           messagesContainer.appendChild(el);
         });
 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function openPreviewModal(msg) {
+        var modal = document.getElementById('previewModal');
+        if (!modal) return;
+        var ph = modal.querySelector('.preview-modal-placeholder');
+        if (ph) {
+          ph.innerHTML = '';
+          if (msg.previewImageUrl) {
+            var img = document.createElement('img');
+            img.src = msg.previewImageUrl;
+            img.alt = 'TV 跨端导流图片预览';
+            img.style.maxWidth = '100%';
+            img.style.borderRadius = '8px';
+            img.style.display = 'block';
+            img.onerror = function () {
+              ph.textContent = '图片加载失败';
+            };
+            ph.appendChild(img);
+          } else {
+            ph.textContent = '暂无预览图片';
+          }
+        }
+        var titleEl = modal.querySelector('.preview-modal-title');
+        if (titleEl) {
+          titleEl.textContent = msg.previewTitle || 'TV 跨端导流图片预览';
+        }
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
       }
 
       function designerFollowupReply() {
@@ -679,6 +926,47 @@
         messages.push({ role: 'designer', content: statusText });
       }
 
+      function getFixedRoleReply(text) {
+        var t = text || '';
+        if (t.indexOf('@线上检查助手') !== -1) {
+          if (
+            t.indexOf('当前 TV 跨端导流素材是什么内容') !== -1 ||
+            (t.indexOf('跨端导流素材') !== -1 && t.indexOf('什么内容') !== -1)
+          ) {
+            return {
+              role: 'assistant',
+              content: '当前为\"大生意人\"。',
+              hasPreviewButton: true,
+              previewImageUrl: 'images/大生意人.JPG',
+              previewTitle: '「大生意人」TV 跨端导流图片预览'
+            };
+          }
+          if (
+            t.indexOf('检查线上配置情况') !== -1 ||
+            t.indexOf('返回线上配图') !== -1
+          ) {
+            return {
+              role: 'assistant',
+              content: '当前为成何体统。',
+              hasPreviewButton: true,
+              previewImageUrl: 'images/成何体统.JPG',
+              previewTitle: '《成何体统》线上配置预览'
+            };
+          }
+        }
+        if (
+          t.indexOf('@配置助手') !== -1 &&
+          (t.indexOf('将上述图片进行配置') !== -1 ||
+            t.indexOf('图片进行配置') !== -1)
+        ) {
+          return {
+            role: 'assistant',
+            content: '已接收配置需求，并完成MBA端导流入口图片配置。'
+          };
+        }
+        return null;
+      }
+
       function handleSend() {
         var text = (input.value || '').trim();
         if (!text) return;
@@ -688,6 +976,25 @@
         var containsDesignerMention =
           text.indexOf('@海报图设计师') !== -1 ||
           text.indexOf('@海报图设计师（0001）') !== -1;
+
+        // 数据洞察分析师 TV 端周报场景
+        var isAnalystTVWeekly = isTVWeeklyReportRequest(text);
+        if (isAnalystTVWeekly) {
+          lastAnalystReportType = 'tv_weekly';
+          var tvReply = buildTVWeeklyFirstResponse();
+          messages.push({ role: 'assistant', content: tvReply });
+          input.value = '';
+          updateState();
+          renderMessages();
+          if (!hasSentOnce) {
+            hasSentOnce = true;
+            if (greetingSection) {
+              greetingSection.classList.add('hidden');
+            }
+          }
+          input.focus();
+          return;
+        }
 
         if (designerFlowState === 'idle' && containsDesignerMention) {
           designerInitialQuestion = text;
@@ -751,9 +1058,14 @@
             designerFlowState = 'done';
           }
         } else {
-          // 普通消息的占位回复（后续可接真实大模型）
-          var echoText = '已收到你的需求，后续我会接入大模型帮你处理。';
-          messages.push({ role: 'assistant', content: echoText });
+          var fixedReply = getFixedRoleReply(text);
+          if (fixedReply) {
+            messages.push(fixedReply);
+          } else {
+            // 普通消息的占位回复（后续可接真实大模型）
+            var echoText = '已收到你的需求，后续我会接入大模型帮你处理。';
+            messages.push({ role: 'assistant', content: echoText });
+          }
         }
 
         input.value = '';
@@ -823,6 +1135,18 @@
           avatarClass: 'role-hotspot',
           scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。',
           skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。'
+        },
+        '0006': {
+          name: '线上检查助手',
+          avatarClass: 'role-checker',
+          scope: '负责线上配置、素材展示与导流路径的检查，帮助快速发现配置问题与异常素材。',
+          skills: '线上配置巡检；导流入口检查；素材展示对比；与配置助手、运营同事协作排查问题。'
+        },
+        '0007': {
+          name: '配置助手',
+          avatarClass: 'role-config',
+          scope: '负责将设计产出的导流图、入口配置到各端位，确保上线配置与方案一致。',
+          skills: '导流图与入口配置；多端位入口检查；与设计师、运营同事协作配置与验证。'
         }
       };
 
@@ -836,12 +1160,26 @@
       var modalTrainBtn = document.getElementById('employeeModalTrainBtn');
       var currentModalEmployeeId = '';
 
+      // 角色：用户 ID -> 角色（admin / manager / trainer / user）
+      var ROLE_MAP = {
+        '1008611': 'admin',   // 小小小筒
+        '1008612': 'manager', // 羊羊羊老大
+        '1008615': 'manager', // 耶耶耶耶
+        '1008617': 'trainer', // 王二二二
+        '1008616': 'trainer', // 蕾佳音音
+        '1008613': 'user',    // 唐又又又
+        '1008614': 'user'     // 木木木夕
+      };
+      function getUserRole(userId) {
+        return ROLE_MAP[String(userId)] || 'user';
+      }
+
       // 养马权限：用户 ID -> 可培养的员工 ID 列表（空表示无权限）
       var TRAIN_PERMISSION = {
-        '1008611': ['0001', '0002', '0003', '0004', '0005'], // 小小小筒：全部
-        '1008615': ['0001', '0002', '0003', '0004', '0005'], // 耶耶耶耶：全部
-        '1008617': ['0001'],                                 // 王二二二：海报图设计师
-        '1008616': ['0005']                                  // 蕾佳音音：热点抓取师
+        '1008611': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'], // 小小小筒：全部
+        '1008615': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'], // 耶耶耶耶：全部
+        '1008617': ['0001'],                                                 // 王二二二：海报图设计师
+        '1008616': ['0005']                                                  // 蕾佳音音：热点抓取师
       };
       function hasTrainPermission(userId, employeeId) {
         if (!userId) return false;
@@ -897,6 +1235,23 @@
         });
       }
 
+      // 预览弹层关闭逻辑
+      var previewModal = document.getElementById('previewModal');
+      var previewModalClose =
+        previewModal && previewModal.querySelector('.preview-modal-close');
+      if (previewModalClose)
+        previewModalClose.addEventListener('click', function () {
+          previewModal.classList.remove('is-open');
+          previewModal.setAttribute('aria-hidden', 'true');
+        });
+      if (previewModal)
+        previewModal.addEventListener('click', function (e) {
+          if (e.target === previewModal) {
+            previewModal.classList.remove('is-open');
+            previewModal.setAttribute('aria-hidden', 'true');
+          }
+        });
+
       function insertMention(mention) {
         if (!mention) return;
         var current = input.value || '';
@@ -918,6 +1273,44 @@
         } catch (e) {}
       }
 
+      if (promptCards && promptCards.length) {
+        promptCards.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var key = this.getAttribute('data-prompt');
+            var curLang = window.currentLang || 'zh';
+            var i18n = window.I18N || I18N;
+            var text =
+              i18n && i18n[curLang] && i18n[curLang][key]
+                ? i18n[curLang][key]
+                : this.textContent;
+            if (currentPromptGroup === 'tv') {
+              var tvLabel =
+                i18n && i18n[curLang] && i18n[curLang].promptTV
+                  ? i18n[curLang].promptTV
+                  : 'TV端数据';
+              input.value = dataAnalystMention + ' ' + tvLabel + ' ' + text;
+            } else {
+              input.value = dataAnalystMention + ' ' + text;
+            }
+            moveCursorToEnd();
+            updateState();
+            applyDataAnalystState();
+            if (key === 'promptTV' && currentPromptGroup === 'root') {
+              hasShownPromptForAt = true;
+              showPromptGroup('tv');
+              promptCardsWrap.classList.add('is-visible');
+              promptCardsWrap.setAttribute('aria-hidden', 'false');
+            } else {
+              promptCardsWrap.classList.remove('is-visible');
+              promptCardsWrap.setAttribute('aria-hidden', 'true');
+              showPromptGroup('root');
+            }
+            input.focus();
+          });
+        });
+      }
+      updatePromptCardsVisibility();
+
       colleagueCards.forEach(function (card) {
         var avatar = card.querySelector('.silicon-avatar');
         if (avatar) {
@@ -932,6 +1325,7 @@
           var isActive = card.classList.contains('active');
           var mention = card.getAttribute('data-mention');
           var actionType = card.getAttribute('data-action');
+          var isDataAnalyst = card.getAttribute('data-employee') === '0004';
 
           // 再次点击已选中卡片：取消选中、恢复默认占位和功能按钮
           if (isActive) {
@@ -941,6 +1335,30 @@
             });
             var curLang = window.currentLang || 'zh';
             input.placeholder = (window.I18N && window.I18N[curLang]) ? window.I18N[curLang].inputPlaceholder : defaultPlaceholder;
+            if (promptCardsWrap) {
+              promptCardsWrap.classList.remove('is-visible');
+              promptCardsWrap.setAttribute('aria-hidden', 'true');
+            }
+            input.focus();
+            moveCursorToEnd();
+            updateState();
+            return;
+          }
+
+          // 数据洞察分析师：插入 mention 并让输入框 @ 触发显示提示卡片
+          if (isDataAnalyst) {
+            colleagueCards.forEach(function (c) { c.classList.remove('active'); });
+            card.classList.add('active');
+            insertMention(mention);
+            actionButtons.forEach(function (b) {
+              b.classList.remove('is-active');
+              if (b.getAttribute('data-action') === 'data') b.classList.add('is-active');
+            });
+            var curLang = window.currentLang || 'zh';
+            var i18n = window.I18N || I18N;
+            input.placeholder = i18n[curLang].inputPlaceholderData;
+            hasShownPromptForAt = false;
+            updatePromptCardsVisibility();
             input.focus();
             moveCursorToEnd();
             updateState();
