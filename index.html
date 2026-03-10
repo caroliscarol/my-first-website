@@ -5,6 +5,8 @@
   <title>海外智能工作台</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -187,6 +189,11 @@
       <section class="chat-section">
         <div class="chat-messages"></div>
         <div class="chat-box">
+          <div class="hotspot-sugs-above" id="hotspotSugsAbove" aria-hidden="true" style="display: none;">
+            <button type="button" class="chat-sug-chip" data-sug="国内热点">国内热点</button>
+            <button type="button" class="chat-sug-chip" data-sug="海外热点">海外热点</button>
+            <button type="button" class="chat-sug-chip" data-sug="每1小时抓取TT热点推送到飞书">定时任务示例</button>
+          </div>
           <div class="prompt-cards-wrap" id="promptCardsWrap" aria-hidden="true">
             <div class="prompt-cards-group" data-group="root">
               <button type="button" class="prompt-card" data-prompt="promptOverseas" data-i18n="promptOverseas">了解海外站数据</button>
@@ -202,9 +209,13 @@
           </div>
           <textarea
             class="chat-input-single"
+            id="chatInput"
             data-i18n-placeholder="inputPlaceholder"
             placeholder="可以输入@你的硅基同事 帮你完成工作任务，开始试试吧"
           ></textarea>
+          <div class="mention-dropdown" id="mentionDropdown" aria-hidden="true" role="listbox">
+            <div class="mention-dropdown-list" id="mentionDropdownList"></div>
+          </div>
           <div class="chat-footer">
             <div class="chat-actions">
               <button class="chat-action-btn" type="button" data-action="image" data-i18n="btnImage">图片制作</button>
@@ -271,6 +282,36 @@
       <div class="preview-modal-body">
         <p class="preview-modal-title">TV 跨端导流图片预览</p>
         <div class="preview-modal-placeholder"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-detail-modal" id="taskDetailModal" aria-hidden="true" role="dialog">
+    <div class="task-detail-modal-backdrop"></div>
+    <div class="task-detail-modal-content">
+      <div class="task-detail-modal-header">
+        <h3 class="task-detail-modal-title" id="taskDetailTitle">任务详情</h3>
+        <button type="button" class="task-detail-modal-close" id="taskDetailModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="task-detail-modal-tabs">
+        <button type="button" class="task-detail-tab is-active" data-tab="basic">基本信息</button>
+        <button type="button" class="task-detail-tab" data-tab="records">执行记录</button>
+        <button type="button" class="task-detail-tab" data-tab="actions">操作面板</button>
+      </div>
+      <div class="task-detail-modal-body">
+        <div class="task-detail-pane" id="taskDetailPaneBasic" data-pane="basic">
+          <div class="task-detail-grid" id="taskDetailBasicContent"></div>
+        </div>
+        <div class="task-detail-pane" id="taskDetailPaneRecords" data-pane="records" style="display:none;">
+          <table class="task-detail-table"><thead><tr><th>执行时间</th><th>抓取数据量</th><th>推送结果</th><th>备注</th></tr></thead><tbody id="taskDetailRecordsBody"></tbody></table>
+        </div>
+        <div class="task-detail-pane" id="taskDetailPaneActions" data-pane="actions" style="display:none;">
+          <div class="task-detail-actions">
+            <button type="button" class="chat-action-chip" id="taskDetailBtnEdit">修改任务</button>
+            <button type="button" class="chat-action-chip" id="taskDetailBtnCancel">取消任务</button>
+            <button type="button" class="chat-action-chip" id="taskDetailBtnRunOnce">手动触发一次</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -486,7 +527,16 @@
       var accountSwitchBtn = document.getElementById('accountSwitchBtn');
       var currentUserName = document.getElementById('currentUserName');
       var currentUserId = document.getElementById('currentUserId');
+      var USER_STORAGE_KEY = 'workbench_current_user';
+      function persistCurrentUser(name, id) {
+        try {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ name: name, id: id }));
+        } catch (e) {}
+      }
       if (accountList && accountSwitchBtn && currentUserName && currentUserId) {
+        var initialUserIdText = currentUserId.textContent || '';
+        var initialMatch = initialUserIdText.match(/ID:\s*(\d+)/);
+        persistCurrentUser(currentUserName.textContent || '小小小筒', initialMatch ? initialMatch[1] : '1008611');
         accountSwitchBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           var open = accountList.classList.toggle('is-open');
@@ -494,8 +544,11 @@
         });
         accountList.querySelectorAll('.account-option').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            currentUserName.textContent = this.getAttribute('data-name');
-            currentUserId.textContent = 'ID: ' + this.getAttribute('data-id');
+            var name = this.getAttribute('data-name');
+            var id = this.getAttribute('data-id');
+            currentUserName.textContent = name;
+            currentUserId.textContent = 'ID: ' + id;
+            persistCurrentUser(name, id);
             accountList.classList.remove('is-open');
             accountList.setAttribute('aria-hidden', 'true');
           });
@@ -542,10 +595,874 @@
         { code: 'pt', name: '葡萄牙文', font: 'Noto Sans / Roboto' },
         { code: 'ar', name: '阿拉伯文', font: 'Noto Naskh Arabic / Noto Sans Arabic' }
       ];
+      var hotspotConfig0005 = {
+        marketAliases: {
+          '泰国': 'th',
+          Thailand: 'th',
+          '印尼': 'id',
+          Indonesia: 'id',
+          '中国': 'cn',
+          '国内': 'cn',
+          '美国': 'us',
+          '日本': 'jp',
+          '欧美': 'eu'
+        },
+        categoryAliases: {
+          '娱乐': 'entertainment',
+          '剧集': 'tv_series',
+          '影视': 'tv_series',
+          '音乐': 'music',
+          '综艺': 'variety_show',
+          '体育': 'sports',
+          '美妆': 'beauty',
+          '明星': 'celebrity',
+          '挑战': 'challenge'
+        }
+      };
+      var hotspotMockXiaohongshu = [
+        { hotspot_id: 'XHS20240521001', title: '《XXX》剧集同款妆容火了', source_platform: '小红书', region: '国内-全网', category: '娱乐-剧集', hot_value: 89000, trend: 'rising', summary: '热播剧女主的伪素颜妆容成小红书爆款，多个博主出教程，相关笔记超5万篇', risk_level: 'low', related_keywords: ['#剧集同款', '#伪素颜教程', '#氛围感妆容'], created_at: '2024-05-21 10:00:00', note_sample: '爆款笔记标题：「跟着女主学伪素颜，手残党也能会！」' },
+        { hotspot_id: 'XHS20240521002', title: 'XX明星同款口红断货', source_platform: '小红书', region: '国内-全网', category: '明星', hot_value: 125000, trend: 'rising', summary: '某顶流剧集发布会同款色号被扒，品牌方补货3次仍售罄，话题阅读破2亿', risk_level: 'low', related_keywords: ['#明星同款', '#口红试色', '#断货王'], created_at: '2024-05-21 09:30:00', note_sample: '爆款笔记标题：「XX同款色号实测，黄皮友好！」' },
+        { hotspot_id: 'XHS20240521003', title: '剧集OST翻唱挑战刷屏', source_platform: '小红书', region: '国内-全网', category: '娱乐-剧集', hot_value: 76000, trend: 'rising', summary: '剧集主题曲翻唱挑战24小时破10万参与，多位音乐博主二创', risk_level: 'low', related_keywords: ['#OST挑战', '#剧集金曲', '#翻唱'], created_at: '2024-05-21 11:00:00', note_sample: '爆款笔记标题：「挑战用XX OST做BGM，氛围感拉满」' },
+        { hotspot_id: 'XHS20240521004', title: '早八通勤妆10分钟出门', source_platform: '小红书', region: '国内-全网', category: '美妆', hot_value: 98000, trend: 'stable', summary: '打工人通勤快手妆教程持续霸榜，干货类笔记收藏量居高', risk_level: 'low', related_keywords: ['#早八妆', '#通勤妆', '#快手妆'], created_at: '2024-05-21 08:00:00', note_sample: '爆款笔记标题：「10分钟伪素颜通勤妆，领导都夸气色好」' },
+        { hotspot_id: 'XHS20240521005', title: 'XX剧CP向剪辑爆款', source_platform: '小红书', region: '国内-全网', category: '娱乐-剧集', hot_value: 112000, trend: 'rising', summary: '剧集CP向混剪、二创在小红书传播极快，情感向内容互动率超15%', risk_level: 'low', related_keywords: ['#CP向', '#剧集二创', '#混剪'], created_at: '2024-05-21 12:00:00', note_sample: '爆款笔记标题：「磕到了！XX和XX的宿命感」' },
+        { hotspot_id: 'XHS20240521006', title: '明星仿妆教程流量密码', source_platform: '小红书', region: '国内-全网', category: '明星', hot_value: 67000, trend: 'rising', summary: '某热播剧女主仿妆教程连续多日登上热搜，仿妆类笔记涨粉明显', risk_level: 'low', related_keywords: ['#仿妆', '#明星仿妆', '#教程'], created_at: '2024-05-20 18:00:00', note_sample: '爆款笔记标题：「仿XX女主妆，闺蜜说像了八分」' },
+        { hotspot_id: 'XHS20240521007', title: '国货美妆剧集联名款', source_platform: '小红书', region: '国内-全网', category: '美妆', hot_value: 54000, trend: 'rising', summary: '国货品牌与热播剧联名款眼影盘上线即售罄，开箱笔记量激增', risk_level: 'low', related_keywords: ['#联名款', '#国货美妆', '#开箱'], created_at: '2024-05-20 14:00:00', note_sample: '爆款笔记标题：「XX剧联名眼影盘实测，配色绝了」' },
+        { hotspot_id: 'XHS20240521008', title: '剧集取景地打卡攻略', source_platform: '小红书', region: '国内-全网', category: '娱乐-剧集', hot_value: 82000, trend: 'stable', summary: '剧集取景地打卡攻略笔记收藏破万，旅游+剧集结合内容表现突出', risk_level: 'low', related_keywords: ['#取景地', '#打卡', '#剧集同款地'], created_at: '2024-05-21 07:00:00', note_sample: '爆款笔记标题：「跟着XX剧打卡，同款机位攻略」' }
+      ];
+      var hotspotMockDomestic = [
+        { hotspot_id: 'WB20240521001', title: '《成何体统》剧集话题阅读量破亿', source_platform: '微博', region: '国内', category: '娱乐-剧集', hot_value: 128000, trend: 'rising', summary: '《成何体统》开播后微博话题阅读量破亿，角色向、剧情向讨论热度高，适合做剧集推广与二创', risk_level: 'low', related_keywords: ['#成何体统', '#剧集热播', '#追剧'], created_at: '2024-05-21 10:00:00' },
+        { hotspot_id: 'WB20240521002', title: '《成何体统》男女主CP向剪辑刷屏', source_platform: '微博', region: '国内', category: '娱乐-剧集', hot_value: 96000, trend: 'rising', summary: '剧集CP向混剪在微博传播迅速，情感向内容互动率突出', risk_level: 'low', related_keywords: ['#成何体统', '#CP向', '#二创'], created_at: '2024-05-21 09:30:00' },
+        { hotspot_id: 'DY20240521003', title: '《成何体统》OST翻唱挑战', source_platform: '抖音', region: '国内', category: '娱乐-剧集', hot_value: 85000, trend: 'rising', summary: '剧集主题曲在抖音引发翻唱挑战，多博主参与', risk_level: 'low', related_keywords: ['#成何体统', '#OST', '#翻唱挑战'], created_at: '2024-05-21 11:00:00' },
+        { hotspot_id: 'WB20240521004', title: '微博剧集榜《成何体统》登顶', source_platform: '微博', region: '国内', category: '娱乐-剧集', hot_value: 72000, trend: 'stable', summary: '剧集登上微博剧集榜榜首，热搜多次上榜', risk_level: 'low', related_keywords: ['#剧集榜', '#成何体统'], created_at: '2024-05-21 08:00:00' },
+        { hotspot_id: 'DY20240521005', title: '剧集同款妆容仿妆教程', source_platform: '抖音', region: '国内', category: '娱乐-剧集', hot_value: 68000, trend: 'rising', summary: '《成何体统》女主同款妆容仿妆教程在抖音获高赞', risk_level: 'low', related_keywords: ['#剧集同款', '#仿妆', '#成何体统'], created_at: '2024-05-20 18:00:00' }
+      ];
+      var hotspotMockOverseasTTReddit = [
+        { id: 'TT001', title: 'Viral Dance Challenge #SeaShanty', platform: 'TikTok', source_platform: 'TikTok', heat: 5200000, heat_label: '520万播放', trend: 'rising', summary: '航海号子舞挑战在TT全球爆火，多国创作者二创，适合品牌植入与UGC', risk_level: 'low', keywords: '#SeaShanty #DanceChallenge #Viral' },
+        { id: 'RD001', title: 'r/television - Best Finale Discussion 2024', platform: 'Reddit', source_platform: 'Reddit', heat: 128000, heat_label: '12.8万互动', trend: 'rising', summary: 'Reddit电视剧板块某剧季终集讨论帖热度飙升，高赞评论破万', risk_level: 'low', keywords: '#Finale #TVSeries #Reddit' },
+        { id: 'TT002', title: 'Get Ready With Me - Celebrity Look', platform: 'TikTok', source_platform: 'TikTok', heat: 3100000, heat_label: '310万播放', trend: 'stable', summary: '明星仿妆类GRWM持续霸榜，美妆与剧集联动内容表现突出', risk_level: 'low', keywords: '#GRWM #CelebrityLook #Makeup' },
+        { id: 'RD002', title: 'r/AskReddit - What show are you bingeing?', platform: 'Reddit', source_platform: 'Reddit', heat: 95000, heat_label: '9.5万互动', trend: 'rising', summary: '问答帖引发剧集推荐与讨论，适合做话题与榜单内容', risk_level: 'low', keywords: '#BingeWatch #Recommendations' },
+        { id: 'TT003', title: 'OST Cover Challenge - Thai Drama', platform: 'TikTok', source_platform: 'TikTok', heat: 2800000, heat_label: '280万播放', trend: 'rising', summary: '泰剧OST翻唱挑战在东南亚TT热度高，多语种翻唱参与量大', risk_level: 'low', keywords: '#OST #ThaiDrama #Cover' },
+        { id: 'RD003', title: 'r/KDRAMA - New Release Megathread', platform: 'Reddit', source_platform: 'Reddit', heat: 76000, heat_label: '7.6万互动', trend: 'rising', summary: '新剧集中讨论帖，剧透与评价讨论活跃', risk_level: 'medium', keywords: '#KDRAMA #NewRelease' },
+        { id: 'TT004', title: 'POV: You are the main character', platform: 'TikTok', source_platform: 'TikTok', heat: 4100000, heat_label: '410万播放', trend: 'stable', summary: 'POV剧情向二创持续产出，适合做角色向与情感向内容', risk_level: 'low', keywords: '#POV #MainCharacter #Viral' },
+        { id: 'RD004', title: 'r/Indonesia - Local Drama Trending', platform: 'Reddit', source_platform: 'Reddit', heat: 54000, heat_label: '5.4万互动', trend: 'rising', summary: '印尼本地剧集在Reddit区域板块讨论升温', risk_level: 'low', keywords: '#Indonesia #LocalDrama' },
+        { id: 'TT005', title: 'Storytime: How I met my bias', platform: 'TikTok', source_platform: 'TikTok', heat: 1900000, heat_label: '190万播放', trend: 'rising', summary: '粉丝向故事与追星经历类内容互动率高', risk_level: 'low', keywords: '#Storytime #Bias #Kpop' },
+        { id: 'RD005', title: 'r/Thailand - Tourism & Drama filming spots', platform: 'Reddit', source_platform: 'Reddit', heat: 62000, heat_label: '6.2万互动', trend: 'stable', summary: '泰国取景地与旅游讨论中剧集取景地常被提及', risk_level: 'low', keywords: '#Thailand #FilmingSpots' }
+      ];
+      var hotspotMockGoogleTrends = [
+        { hotspot_id: 'GT20240521001', title: 'Thai Drama OST Challenge', source_platform: 'Google Trends', region: '泰国', category: 'Entertainment-Drama', hot_value: 156000, trend: 'rising', summary: '泰剧OST挑战在泰国全网爆火，Google搜索量24小时增长200%，TikTok相关视频超100万条', risk_level: 'low', related_keywords: ['#ThaiDrama', '#OSTChallenge', '#ThaiDrama2024'], created_at: '2024-05-21 08:00:00', local_language_title: 'ละครไทย OST ท้าทาย', search_volume: '100万+', growth_pct: '↑1,020%', started_at: '13小时前', trend_chart_ascii: '24h热度: ▁▂▃▄▅▆▇█ 上升' },
+        { hotspot_id: 'GT20240521002', title: 'Indonesian Romance Drama Trend', source_platform: 'Google Trends', region: '印尼', category: 'Entertainment-Drama', hot_value: 128000, trend: 'rising', summary: '印尼高甜剧集搜索量持续攀升，多平台二创与话题讨论热度高', risk_level: 'low', related_keywords: ['#DramaIndonesia', '#RomanceDrama', '#Viral'], created_at: '2024-05-21 07:30:00', local_language_title: 'Trend Drama Romantis Indonesia', search_volume: '20万+', growth_pct: '↑450%', started_at: '8小时前', trend_chart_ascii: '24h热度: ▁▃▅▇█ 上升' },
+        { hotspot_id: 'GT20240521003', title: 'Thai Celebrity Couple News', source_platform: 'Google Trends', region: '泰国', category: 'Entertainment', hot_value: 98000, trend: 'rising', summary: '泰娱CP话题搜索量24h内翻倍，适合做话题营销与封面素材', risk_level: 'low', related_keywords: ['#ThaiCelebrity', '#CoupleNews', '#Thailand'], created_at: '2024-05-21 09:00:00', local_language_title: 'ข่าวคู่รักดาราไทย', search_volume: '15万+', growth_pct: '↑280%', started_at: '5小时前', trend_chart_ascii: '24h热度: ▂▄▆█ 上升' },
+        { hotspot_id: 'GT20240521004', title: 'Dance Challenge Viral SEA', source_platform: 'Google Trends', region: '印尼', category: 'Challenge', hot_value: 185000, trend: 'rising', summary: '东南亚舞蹈挑战在Google Trends多国登顶，TikTok播放量破5亿', risk_level: 'low', related_keywords: ['#DanceChallenge', '#ViralSEA', '#TikTokChallenge'], created_at: '2024-05-21 06:00:00', local_language_title: 'Tantangan Dance Viral SEA', search_volume: '85万+', growth_pct: '↑1,500%', started_at: '18小时前', trend_chart_ascii: '24h热度: ▁▂▃▄▅▆▇█ 爆款' },
+        { hotspot_id: 'GT20240521005', title: 'Thai Drama OST Cover', source_platform: 'Google Trends', region: '泰国', category: 'Entertainment-Drama', hot_value: 87000, trend: 'stable', summary: '泰剧OST翻唱与乐器cover在YouTube与TikTok表现突出', risk_level: 'low', related_keywords: ['#OSTCover', '#ThaiDrama', '#Cover'], created_at: '2024-05-20 22:00:00', local_language_title: 'คัฟเวอร์ OST ละครไทย', search_volume: '12万+', growth_pct: '↑80%', started_at: '20小时前', trend_chart_ascii: '24h热度: ▄▅▅▅▆ 平稳' },
+        { hotspot_id: 'GT20240521006', title: 'Indonesia Drama Recap', source_platform: 'Google Trends', region: '印尼', category: 'Entertainment-Drama', hot_value: 72000, trend: 'rising', summary: '印尼剧集剧情解说与recap类内容搜索量上升，适合做深度内容', risk_level: 'low', related_keywords: ['#DramaRecap', '#Indonesia', '#Recap'], created_at: '2024-05-21 05:00:00', local_language_title: 'Recap Drama Indonesia', search_volume: '8万+', growth_pct: '↑320%', started_at: '10小时前', trend_chart_ascii: '24h热度: ▃▅▇█ 上升' },
+        { hotspot_id: 'GT20240521007', title: 'Thai Tourism Drama Spots', source_platform: 'Google Trends', region: '泰国', category: 'Entertainment', hot_value: 65000, trend: 'rising', summary: '剧集取景地带动泰国旅游搜索，取景地打卡攻略热度高', risk_level: 'low', related_keywords: ['#Thailand', '#FilmingSpots', '#Drama'], created_at: '2024-05-21 04:00:00', local_language_title: 'สถานที่ถ่ายละครไทย', search_volume: '6万+', growth_pct: '↑180%', started_at: '12小时前', trend_chart_ascii: '24h热度: ▂▄▆█ 上升' },
+        { hotspot_id: 'GT20240521008', title: 'Indonesian Web Series Buzz', source_platform: 'Google Trends', region: '印尼', category: 'Entertainment-Drama', hot_value: 58000, trend: 'rising', summary: '印尼网剧新作搜索量攀升，年轻观众讨论度高', risk_level: 'low', related_keywords: ['#WebSeries', '#Indonesia', '#Viral'], created_at: '2024-05-21 03:00:00', local_language_title: 'Web Series Indonesia Viral', search_volume: '5万+', growth_pct: '↑220%', started_at: '6小时前', trend_chart_ascii: '24h热度: ▃▅▇ 上升' }
+      ];
+      var hotspotMockList0005 = [
+        { id: 'th-ent-001', platform: 'twitter', market: 'th', category: 'entertainment', title: '泰国本土浪漫喜剧剧集爆火，话题量破百万', summary: '一部讲述现代都市爱情的泰国剧，在 Twitter 和 TikTok 上被大量二创，CP 向剪辑刷屏。', url: 'https://example.com/th/romcom-drama', heat: 120000, trend: 'rising', language: 'zh', riskLevel: 'low', riskReason: '常规娱乐话题，无明显政策或版权风险。' },
+        { id: 'th-tv-001', platform: 'douyin', market: 'th', category: 'tv_series', title: '泰剧 OST 在抖音走红，用户自制翻唱挑战热度攀升', summary: '剧集主题曲在短视频平台被广泛翻唱，多语种翻唱挑战开启，适合联动音乐类内容。', url: 'https://example.com/th/ost-trend', heat: 95000, trend: 'rising', language: 'zh', riskLevel: 'medium', riskReason: '需注意音乐版权及二次创作使用范围。' },
+        { id: 'id-tv-001', platform: 'twitter', market: 'id', category: 'tv_series', title: '印尼观众热议高甜校园剧，话题标签长期占据趋势榜', summary: '印尼校园题材剧集在社交媒体引发大量讨论，观众自发产出校园日常相关内容。', url: 'https://example.com/id/campus-drama', heat: 88000, trend: 'stable', language: 'zh', riskLevel: 'low', riskReason: '常规剧集讨论，注意避免剧透引发争议。' },
+        { id: 'global-trend-001', platform: 'google_trends', market: 'us', category: 'tv_series', title: '全球搜索热度上升：本周新上线的悬疑剧', summary: '多地区用户搜索某部新上线悬疑剧，推测与平台首页推荐和社交话题联动有关。', url: 'https://example.com/global/mystery-drama', heat: 150000, trend: 'rising', language: 'en', riskLevel: 'medium', riskReason: '悬疑类话题可能涉及暴力、敏感情节，文案表达需注意尺度。' },
+        { id: 'th-line-001', platform: 'line', market: 'th', category: 'tv_series', title: '泰国 Line 热门群组疯狂安利一部治愈系家庭剧', summary: '大量用户在聊天群和时间线里自发分享观后感，引发“家人陪伴”相关话题。', url: 'https://example.com/th/family-drama', heat: 76000, trend: 'rising', language: 'th', riskLevel: 'low', riskReason: '家庭向内容，整体安全，但需注意避免过度煽情或虚假宣传。' }
+      ];
+      var lastHotspotList0005 = [];
+      var selectedHotspotIndex0005 = null;
+      var lastHotspotSource0005 = null;
+      var copyParams0005 = null;
+      var flow0005 = 'idle';
+      var scheduledTaskParams0005 = null;
+      var currentScheduledTasks = [];
+      var historyScheduledTasks = [];
+
+      function normalizeHotspotItem0005(raw) {
+        var market = raw.region ? (raw.region.indexOf('国内') !== -1 ? 'cn' : raw.region.indexOf('泰国') !== -1 ? 'th' : raw.region.indexOf('印尼') !== -1 ? 'id' : 'eu') : (raw.market || 'cn');
+        var cat = raw.category || '';
+        if (cat.indexOf('剧集') !== -1 || cat.indexOf('Drama') !== -1) cat = 'tv_series';
+        else if (cat.indexOf('美妆') !== -1) cat = 'beauty';
+        else if (cat.indexOf('明星') !== -1) cat = 'celebrity';
+        else if (cat.indexOf('挑战') !== -1 || cat.indexOf('Challenge') !== -1) cat = 'challenge';
+        else if (cat.indexOf('娱乐') !== -1 || cat.indexOf('Entertainment') !== -1) cat = 'entertainment';
+        return {
+          id: raw.hotspot_id || raw.id,
+          title: raw.title,
+          summary: raw.summary,
+          heat: raw.hot_value != null ? raw.hot_value : raw.heat,
+          trend: raw.trend || 'stable',
+          riskLevel: raw.risk_level || raw.riskLevel || 'low',
+          platform: raw.source_platform || raw.platform,
+          market: market,
+          category: cat,
+          source_platform: raw.source_platform,
+          related_keywords: raw.related_keywords,
+          note_sample: raw.note_sample,
+          local_language_title: raw.local_language_title,
+          search_volume: raw.search_volume,
+          heat_label: raw.heat_label,
+          keywords: raw.keywords,
+          growth_pct: raw.growth_pct,
+          started_at: raw.started_at,
+          trend_chart_ascii: raw.trend_chart_ascii,
+          riskReason: raw.riskReason
+        };
+      }
+
+      function shuffleArray0005(arr) {
+        var copy = arr.slice();
+        for (var i = copy.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = tmp;
+        }
+        return copy;
+      }
+
+      function fetchHotspotsFor0005(marketCode, categoryCode, source, text) {
+        var list = [];
+        if (source === 'overseas_tt_reddit') {
+          list = hotspotMockOverseasTTReddit.slice(0, 10).map(function (raw) {
+            return { id: raw.id, title: raw.title, summary: raw.summary, heat: raw.heat, trend: raw.trend, riskLevel: raw.risk_level || 'low', platform: raw.platform, source_platform: raw.source_platform, heat_label: raw.heat_label, keywords: raw.keywords };
+          });
+        } else if (source === 'overseas_google_trends') {
+          list = hotspotMockGoogleTrends.filter(function (raw) {
+            var r = raw.region || '';
+            return r.indexOf('泰国') !== -1 || r.indexOf('印尼') !== -1;
+          }).slice(0, 10).map(normalizeHotspotItem0005);
+        } else if (source === 'domestic') {
+          list = hotspotMockDomestic.filter(function (raw) {
+            var cat = raw.category || '';
+            if (categoryCode === 'tv_series' && cat.indexOf('剧集') === -1) return false;
+            if ((text || '').indexOf('上升') !== -1 && raw.trend !== 'rising') return false;
+            return true;
+          }).map(normalizeHotspotItem0005);
+        } else if (source === 'xiaohongshu') {
+          list = hotspotMockXiaohongshu.filter(function (raw) {
+            var cat = raw.category || '';
+            if (categoryCode === 'tv_series' && cat.indexOf('剧集') === -1) return false;
+            if (categoryCode === 'beauty' && cat.indexOf('美妆') === -1) return false;
+            if (categoryCode === 'celebrity' && cat.indexOf('明星') === -1) return false;
+            if ((text || '').indexOf('上升') !== -1 && raw.trend !== 'rising') return false;
+            return true;
+          }).map(normalizeHotspotItem0005);
+        } else if (source === 'google_trends') {
+          list = hotspotMockGoogleTrends.filter(function (raw) {
+            var region = raw.region || '';
+            var r = region.indexOf('泰国') !== -1 ? 'th' : region.indexOf('印尼') !== -1 ? 'id' : 'eu';
+            if (marketCode && r !== marketCode) return false;
+            var cat = raw.category || '';
+            if (categoryCode && categoryCode === 'tv_series' && cat.indexOf('Drama') === -1 && cat.indexOf('剧集') === -1) return false;
+            if (categoryCode && categoryCode === 'entertainment' && cat.indexOf('Entertainment') === -1) return false;
+            if (categoryCode && categoryCode === 'challenge' && cat.indexOf('Challenge') === -1) return false;
+            if ((text || '').indexOf('上升') !== -1 && raw.trend !== 'rising') return false;
+            return true;
+          }).map(normalizeHotspotItem0005);
+        } else {
+          list = hotspotMockList0005.slice();
+          if (marketCode) list = list.filter(function (h) { return h.market === marketCode; });
+          if (categoryCode) list = list.filter(function (h) { return h.category === categoryCode; });
+          list = shuffleArray0005(list);
+        }
+        return list.slice(0, 10);
+      }
+
+      function parseScheduledTaskParams0005(text) {
+        var schedule = {};
+        var m = text.match(/每\s*(\d+)\s*小时/);
+        if (m) {
+          schedule.type = 'interval_hours';
+          schedule.hours = parseInt(m[1], 10);
+        } else {
+          m = text.match(/每天\s*(\d{1,2})\s*点/);
+          if (m) {
+            schedule.type = 'daily';
+            schedule.hour = parseInt(m[1], 10) % 24;
+          }
+        }
+        var channel = (text.indexOf('TT') !== -1 || text.indexOf('tiktok') !== -1) ? 'TikTok' : (text.indexOf('reddit') !== -1) ? 'Reddit' : (text.indexOf('google trends') !== -1 || text.indexOf('谷歌趋势') !== -1) ? 'Google Trends' : (text.indexOf('小红书') !== -1) ? '小红书' : 'TikTok';
+        var topN = 10;
+        m = text.match(/top\s*(\d+)|前\s*(\d+)\s*条|Top\s*(\d+)/i);
+        if (m) topN = parseInt(m[1] || m[2] || m[3], 10);
+        var push = [];
+        if (text.indexOf('工作台') !== -1) push.push('工作台');
+        if (text.indexOf('飞书') !== -1) push.push('飞书');
+        if (text.indexOf('excel') !== -1 || text.indexOf('表格') !== -1) push.push('Excel');
+        if (!push.length) push = ['工作台'];
+        var name = (schedule.type === 'interval_hours' ? '每' + (schedule.hours || 1) + '小时抓取' : '每天抓取') + channel + ' Top' + topN + '热点';
+        return { schedule: schedule, channel: channel, scope: { top_n: topN, regions: ['全球'] }, push_targets: push, task_name: name };
+      }
+
+      function nextScheduledTaskId0005() {
+        return 'TASK' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+      }
+
+      function createScheduledTask0005(params) {
+        var id = nextScheduledTaskId0005();
+        var nextRun = '';
+        if (params.schedule.type === 'interval_hours') nextRun = new Date(Date.now() + (params.schedule.hours || 1) * 3600000).toLocaleString('zh-CN', { hour12: false });
+        else nextRun = new Date().toLocaleDateString('zh-CN') + ' ' + (params.schedule.hour || 9) + ':00:00';
+        var task = { task_id: id, task_name: params.task_name, status: '待执行', created_at: new Date().toLocaleString('zh-CN', { hour12: false }), creator: '当前用户', schedule: params.schedule, channel: params.channel, scope: params.scope, push_targets: params.push_targets, next_run_time: nextRun, run_count: 0, last_result: null, execution_records: [], feishu_webhook: params.push_targets.indexOf('飞书') !== -1 ? 'https://open.feishu.cn/.../****' : null };
+        currentScheduledTasks.unshift(task);
+        return task;
+      }
+
+      function getScheduledTaskById0005(id) {
+        for (var i = 0; i < currentScheduledTasks.length; i++) if (currentScheduledTasks[i].task_id === id) return currentScheduledTasks[i];
+        return null;
+      }
+
+      function detectMarketAndCategory0005(text) {
+        var t = (text || '').toLowerCase();
+        var marketCode = null;
+        Object.keys(hotspotConfig0005.marketAliases).forEach(function (k) {
+          if (!marketCode && t.indexOf(k.toLowerCase()) !== -1) marketCode = hotspotConfig0005.marketAliases[k];
+        });
+        var categoryCode = null;
+        Object.keys(hotspotConfig0005.categoryAliases).forEach(function (k) {
+          if (!categoryCode && t.indexOf(k.toLowerCase()) !== -1) categoryCode = hotspotConfig0005.categoryAliases[k];
+        });
+        if (!categoryCode && (text.indexOf('种草') !== -1 || text.indexOf('推荐') !== -1)) categoryCode = 'entertainment';
+        return { marketCode: marketCode, categoryCode: categoryCode };
+      }
+
+      function detectSource0005(text) {
+        var t = (text || '').toLowerCase();
+        if (t.indexOf('google trends') !== -1 || t.indexOf('google trend') !== -1 || t.indexOf('谷歌趋势') !== -1) return 'overseas_google_trends';
+        if (t.indexOf('海外热点') !== -1 || t.indexOf('海外') !== -1) return 'overseas_tt_reddit';
+        if (t.indexOf('泰国') !== -1 || t.indexOf('印尼') !== -1) return 'google_trends';
+        if (t.indexOf('国内热点') !== -1 || t.indexOf('国内') !== -1 || t.indexOf('微博') !== -1 || t.indexOf('抖音') !== -1) return 'domestic';
+        if (t.indexOf('小红书') !== -1 || (t.indexOf('国内') !== -1 && (t.indexOf('热点') !== -1 || t.indexOf('剧集') !== -1 || t.indexOf('美妆') !== -1))) return 'xiaohongshu';
+        return null;
+      }
+
+      function detectHotspotIntent0005(text) {
+        var t = (text || '').toLowerCase();
+        if (flow0005 === 'waiting_scheduled_confirm' && (text.indexOf('确认') !== -1 || text.indexOf('创建') !== -1)) return 'scheduled_task_confirm';
+        var isScheduledCreate = (text.indexOf('定时任务') !== -1 && (text.indexOf('设置') !== -1 || text.indexOf('每') !== -1 || text.indexOf('每天') !== -1)) || (/每\s*\d+\s*小时|每天\s*\d+\s*点/.test(text) && (text.indexOf('抓取') !== -1 || text.indexOf('TT') !== -1 || text.indexOf('飞书') !== -1));
+        var isScheduledCancel = text.indexOf('取消') !== -1 && (text.indexOf('定时') !== -1 || text.indexOf('任务') !== -1 || text.indexOf('抓取') !== -1);
+        if (isScheduledCreate || isScheduledCancel) return 'scheduled_task';
+        if (text.indexOf('查看该热点详情') !== -1 || (text.indexOf('查看') !== -1 && text.indexOf('热点') !== -1 && text.indexOf('详情') !== -1)) return 'view_detail';
+        if (text.indexOf('根据热点生成文案') !== -1 || (text.indexOf('根据热点') !== -1 && text.indexOf('文案') !== -1)) return 'generate_copy';
+        if (text.indexOf('批量导出至飞书表格') !== -1 || (text.indexOf('飞书') !== -1 && text.indexOf('导出') !== -1)) return 'batch_export_feishu';
+        if (text.indexOf('导出当前热点列表为Excel') !== -1 || (text.indexOf('导出') !== -1 && text.indexOf('热点列表') !== -1)) return 'batch_export';
+        if (/选\s*第\s*\d+\s*条/.test(text) || (flow0005 === 'list_shown' && /第\s*\d+\s*条/.test(text))) return 'select_hotspot';
+        if (text.indexOf('导出') !== -1 && (t.indexOf('excel') !== -1 || text.indexOf('表格') !== -1 || text.indexOf('存档') !== -1)) return 'batch_export';
+        if (t.indexOf('top3') !== -1 || t.indexOf('top 3') !== -1 || text.indexOf('前3') !== -1 || text.indexOf('按热度排序') !== -1 || text.indexOf('最适合蹭') !== -1) return 'batch_top3';
+        if (text.indexOf('批量') !== -1 && (text.indexOf('蹭点') !== -1 || text.indexOf('简报') !== -1)) return 'batch_brief';
+        if (text.indexOf('打包导出') !== -1 || text.indexOf('热点+文案') !== -1 || text.indexOf('打包') !== -1) return 'export_pack';
+        if (text.indexOf('同步') !== -1 && (t.indexOf('cms') !== -1 || text.indexOf('内容管理') !== -1)) return 'sync_cms';
+        if (text.indexOf('分析') !== -1 && (text.indexOf('蹭点') !== -1 || text.indexOf('风险') !== -1)) return 'analyze_risk';
+        if (text.indexOf('相似热点') !== -1 || text.indexOf('找相似') !== -1) return 'find_similar';
+        if (flow0005 === 'hotspot_selected' && /^[1-5]$/.test(text.trim())) return 'menu_option';
+        if (text.indexOf('海外热点') !== -1 || text.indexOf('国内热点') !== -1 || text.indexOf('适合种草') !== -1 || (text.indexOf('热点') !== -1 && text.indexOf('哪些') !== -1) || (text.indexOf('找') !== -1 && text.indexOf('热点') !== -1) || (text.indexOf('查') !== -1 && text.indexOf('热点') !== -1)) return 'list_hotspots';
+        if (text.indexOf('怎么结合') !== -1 && text.indexOf('剧') !== -1) return 'combine_with_show';
+        if (text.indexOf('文案') !== -1 || text.indexOf('写') !== -1 || t.indexOf('tiktok') !== -1 || t.indexOf('youtube') !== -1 || text.indexOf('种草') !== -1) return 'generate_copy';
+        return 'list_hotspots';
+      }
+
+      function getRiskSummary0005(h) {
+        if (h.riskLevel === 'low') return '风险较低，可正常跟进，但仍建议基本合规审核。';
+        if (h.riskLevel === 'medium') return '存在一定内容/版权/舆情风险，建议先让法务或品牌同学快速看一眼。';
+        if (h.riskLevel === 'high') return '风险较高，暂不建议直接种草，需严格评估和审批。';
+        return '风险未知，建议谨慎处理。';
+      }
+
+      function formatHotspotBrief0005(h) {
+        var riskSummary = getRiskSummary0005(h);
+        var heatVal = h.heat != null ? h.heat : 0;
+        var heatStr = h.heat_label || (heatVal >= 10000 ? (Math.floor(heatVal / 10000) + '万+') : String(heatVal));
+        var trendCn = { rising: '上升', stable: '平稳', falling: '下降' }[h.trend] || h.trend || '—';
+        var riskNote = (h.riskReason != null && h.riskReason !== '') ? h.riskLevel + '（' + h.riskReason + '）' : h.riskLevel + '（' + riskSummary + '）';
+        return '• 标题：' + h.title + '\n  来源平台：' + (h.platform || h.source_platform || '—') + '，市场：' + (h.market || '—') + '，垂类：' + (h.category || '—') + '，热度：' + heatStr + '，趋势：' + trendCn + '\n  简要说明：' + (h.summary || '') + '\n  风险等级：' + riskNote + '\n  运营建议：' + riskSummary + '\n' + (h.url ? '  链接：' + h.url : '');
+      }
+
+      function extractShowHint0005(text) {
+        var keys = ['我们的剧集', '这部剧', '这个剧', '这部作品', '这档节目'];
+        for (var i = 0; i < keys.length; i++) {
+          var idx = text.indexOf(keys[i]);
+          if (idx !== -1) return text.slice(idx).trim();
+        }
+        if (text.length > 30) return text.slice(0, 30) + '...';
+        return text;
+      }
+
+      function extractPlatformHint0005(text) {
+        var t = (text || '').toLowerCase();
+        if (t.indexOf('tiktok') !== -1) return 'tiktok';
+        if (text.indexOf('抖音') !== -1) return 'douyin';
+        if (t.indexOf('twitter') !== -1 || t.indexOf('x') !== -1) return 'twitter';
+        if (t.indexOf('reddit') !== -1) return 'reddit';
+        return 'tiktok';
+      }
+
+      function generateCopies0005(h, platform, language, count, extraContext) {
+        var lang = language || 'zh';
+        var ctx = extraContext || '';
+        var baseDesc = h.summary || h.title;
+        var p = String(platform || '').toLowerCase();
+        var style = (p === 'tiktok' || p === 'douyin') ? '短视频种草' : (p === 'twitter' || p === 'x') ? '话题讨论' : '社交媒体种草';
+        var templatesZh = [
+          '【' + style + '】基于当前热点「' + h.title + '」，结合你的剧集/内容：' + ctx + '，来一条轻松种草文案：' + baseDesc + '，可以用剧情高光+情绪共鸣切入。',
+          '今天的热门话题是「' + h.title + '」，不妨用这条文案把观众拉进剧情世界：' + ctx + '。记得配上剧中高能片段或角色名场面。',
+          '围绕「' + h.title + '」，可以做一个#今日追剧安利# 话题：从' + ctx + '的亮点出发，引导大家在评论区分享自己的共鸣时刻。'
+        ];
+        var templatesEn = [
+          '[' + style + '] Today\'s hot topic is “' + h.title + '”. Tie it with your show: ' + ctx + ', and use emotional hooks or key scenes to drive engagement.',
+          'Riding on the trend “' + h.title + '”, create a quick snackable post about ' + ctx + '. Add a strong call-to-action like “watch now” or “don’t miss this episode”.',
+          'Turn “' + h.title + '” into a hashtag campaign. Start with the most dramatic moment in ' + ctx + ' and ask fans to share their favorite scenes.'
+        ];
+        var templatesTh = [
+          '【' + style + '】กระแสวันนี้คือ “' + h.title + '” ลองผูกกับซีรีส์ของคุณ: ' + ctx + ' ใช้โมเมนต์ซึ้งๆ หรือฉากฮาๆ ดึงคนดูเข้ามา',
+          'ใช้เทรนด์ “' + h.title + '” ทำโพสต์สั้นๆ เกี่ยวกับ ' + ctx + ' แล้วชวนแฟน ๆ มาเมนต์ฉากที่ชอบที่สุด',
+          'สร้างแฮชแท็กจาก “' + h.title + '” แล้วให้คนดูแชร์ความรู้สึกหลังดู ' + ctx + ' ยิ่งจริงใจยิ่งมีโอกาสไวรัล'
+        ];
+        var templatesId = [
+          '[' + style + '] Topik hari ini: “' + h.title + '”. Sambungkan dengan serial kamu: ' + ctx + ', pakai momen paling “baper” atau paling lucu untuk tarik perhatian.',
+          'Manfaatkan tren “' + h.title + '” buat konten singkat tentang ' + ctx + '. Ajak penonton komen adegan favorit mereka.',
+          'Jadikan “' + h.title + '” sebagai hashtag, lalu minta fans bagikan reaksi mereka setelah nonton ' + ctx + '.'
+        ];
+        var pool = lang === 'en' ? templatesEn : lang === 'th' ? templatesTh : lang === 'id' ? templatesId : templatesZh;
+        var result = [];
+        for (var i = 0; i < count; i++) result.push(pool[Math.floor(Math.random() * pool.length)]);
+        return result;
+      }
+
+      function toHotspotReply0005(text, opts) {
+        var o = typeof text === 'string' ? { text: text } : text;
+        if (opts) {
+          o.hotspotCards = opts.hotspotCards;
+          o.batchActions = opts.batchActions;
+          o.hotspotMenu = opts.hotspotMenu;
+          o.actions = opts.actions;
+          o.copyParamsQuestion = opts.copyParamsQuestion;
+          o.exportFollowUp = opts.exportFollowUp;
+          o.copyType = opts.copyType;
+          o.copyBlocks = opts.copyBlocks;
+          o.refinementPrompt = opts.refinementPrompt;
+          o.exportFeishuCsv = opts.exportFeishuCsv;
+          o.scheduledTaskConfirm = opts.scheduledTaskConfirm;
+        }
+        return o;
+      }
+
+      function buildHotspotCsvForFeishu0005() {
+        var list = lastHotspotList0005 || [];
+        if (!list.length) return '';
+        var source = lastHotspotSource0005;
+        var headers = source === 'overseas_tt_reddit' ? ['标题', '来源平台', '热度', '趋势', '摘要', '风险等级', '关键词'] : ['标题', '来源平台', '热度', '趋势', '摘要', '风险等级'];
+        var rows = [headers.join(',')];
+        list.forEach(function (h) {
+          var heatStr = h.heat_label || (h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat || 0));
+          var trendCn = { rising: '上升', stable: '平稳', falling: '下降' }[h.trend] || h.trend || '';
+          var cells = ['"' + (h.title || '').replace(/"/g, '""') + '"', '"' + (h.platform || h.source_platform || '').replace(/"/g, '""') + '"', '"' + heatStr + '"', '"' + trendCn + '"', '"' + (h.summary || '').replace(/"/g, '""').substring(0, 200) + '"', '"' + (h.riskLevel === 'low' ? '低' : h.riskLevel === 'medium' ? '中' : '高') + '"'];
+          if (source === 'overseas_tt_reddit') cells.push('"' + (h.keywords || '').replace(/"/g, '""') + '"');
+          rows.push(cells.join(','));
+        });
+        return '\uFEFF' + rows.join('\n');
+      }
+
+      function renderCurrentTasksSidebar0005() {
+        var listEl = document.getElementById('currentTasksList');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        currentScheduledTasks.forEach(function (t) {
+          var card = document.createElement('div');
+          card.className = 'current-task-card';
+          var freqText = t.schedule && t.schedule.type === 'interval_hours' ? '每' + (t.schedule.hours || 1) + '小时执行' : '每天' + (t.schedule.hour || 9) + '点执行';
+          var statusClass = t.status === '运行中' ? 'current-task-status-running' : 'current-task-status-pending';
+          card.innerHTML = '<div class="current-task-id">' + t.task_id + '</div><div class="current-task-name">' + (t.task_name || '') + '</div><div class="current-task-freq">' + freqText + '</div><div class="current-task-meta"><span class="current-task-status ' + statusClass + '">' + t.status + '</span> 下次：' + (t.next_run_time || '-') + '</div><div class="current-task-btns"><button type="button" class="current-task-btn current-task-btn-detail">查看详情</button><button type="button" class="current-task-btn current-task-btn-cancel">取消任务</button></div>';
+          card.querySelector('.current-task-btn-detail').addEventListener('click', function () { openTaskDetailModal0005(t.task_id); });
+          card.querySelector('.current-task-btn-cancel').addEventListener('click', function () { cancelScheduledTaskFromSidebar0005(t.task_id); });
+          listEl.appendChild(card);
+        });
+      }
+
+      function cancelScheduledTaskFromSidebar0005(taskId) {
+        var task = getScheduledTaskById0005(taskId);
+        if (!task) return;
+        if (!window.confirm('确认取消任务 ' + taskId + ' 吗？取消后将不再执行。')) return;
+        historyScheduledTasks.unshift(Object.assign({}, task, { status: '已取消', cancelled_at: new Date().toLocaleString('zh-CN', { hour12: false }) }));
+        currentScheduledTasks = currentScheduledTasks.filter(function (t) { return t.task_id !== taskId; });
+        renderCurrentTasksSidebar0005();
+        var modal = document.getElementById('taskDetailModal');
+        if (modal && modal.getAttribute('aria-hidden') === 'false') {
+          modal.setAttribute('aria-hidden', 'true');
+          modal.classList.remove('is-open');
+        }
+      }
+
+      function openTaskDetailModal0005(taskId) {
+        var task = getScheduledTaskById0005(taskId);
+        if (!task) return;
+        var modal = document.getElementById('taskDetailModal');
+        var titleEl = document.getElementById('taskDetailTitle');
+        if (titleEl) titleEl.textContent = '任务详情 - ' + task.task_id;
+        var freqText = task.schedule && task.schedule.type === 'interval_hours' ? '每' + (task.schedule.hours || 1) + '小时' : '每天' + (task.schedule.hour || 9) + '点';
+        var basicHtml = '<div class="task-detail-row"><span class="task-detail-label">任务ID</span><span class="task-detail-value task-detail-id">' + task.task_id + '</span></div><div class="task-detail-row"><span class="task-detail-label">创建时间</span><span class="task-detail-value">' + task.created_at + '</span></div><div class="task-detail-row"><span class="task-detail-label">创建人</span><span class="task-detail-value">' + (task.creator || '-') + '</span></div><div class="task-detail-row"><span class="task-detail-label">状态</span><span class="task-detail-value task-detail-status">' + task.status + '</span></div><div class="task-detail-row"><span class="task-detail-label">定时频率</span><span class="task-detail-value">' + freqText + '</span></div><div class="task-detail-row"><span class="task-detail-label">抓取配置</span><span class="task-detail-value">' + (task.channel || '') + '，Top' + (task.scope && task.scope.top_n) + '、' + ((task.scope && task.scope.regions && task.scope.regions.join(' ')) || '全球') + '</span></div><div class="task-detail-row"><span class="task-detail-label">推送配置</span><span class="task-detail-value">工作台' + (task.push_targets && task.push_targets.indexOf('工作台') !== -1 ? '是' : '否') + '，飞书' + (task.push_targets && task.push_targets.indexOf('飞书') !== -1 ? '是' : '否') + (task.feishu_webhook ? '，Webhook ' + task.feishu_webhook : '') + '</span></div><div class="task-detail-row"><span class="task-detail-label">下次执行时间</span><span class="task-detail-value">' + (task.next_run_time || '-') + '</span></div><div class="task-detail-row"><span class="task-detail-label">累计执行次数</span><span class="task-detail-value">' + (task.run_count || 0) + '</span></div><div class="task-detail-row"><span class="task-detail-label">最近执行结果</span><span class="task-detail-value">' + (task.last_result || '-') + '</span></div>';
+        var basicContent = document.getElementById('taskDetailBasicContent');
+        if (basicContent) basicContent.innerHTML = basicHtml;
+        var tbody = document.getElementById('taskDetailRecordsBody');
+        if (tbody) {
+          tbody.innerHTML = '';
+          (task.execution_records || []).forEach(function (rec) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (rec.time || '-') + '</td><td>' + (rec.count != null ? rec.count : '-') + '</td><td>' + (rec.result || '-') + '</td><td>' + (rec.remark || '-') + '</td>';
+            tbody.appendChild(tr);
+          });
+        }
+        var btnEdit = document.getElementById('taskDetailBtnEdit');
+        var btnCancel = document.getElementById('taskDetailBtnCancel');
+        var btnRunOnce = document.getElementById('taskDetailBtnRunOnce');
+        if (btnEdit) btnEdit.onclick = function () { editScheduledTask0005(taskId); };
+        if (btnCancel) btnCancel.onclick = function () { cancelScheduledTaskFromDetail0005(taskId); };
+        if (btnRunOnce) btnRunOnce.onclick = function () { runScheduledTaskOnce0005(taskId); };
+        if (modal) {
+          modal.setAttribute('aria-hidden', 'false');
+          modal.classList.add('is-open');
+        }
+      }
+
+      function editScheduledTask0005(taskId) {
+        var task = getScheduledTaskById0005(taskId);
+        if (!task) return;
+        var newHours = window.prompt('修改定时频率（每X小时），当前：每' + (((task.schedule && task.schedule.hours) || 1)) + '小时', ((task.schedule && task.schedule.hours) || 1));
+        if (newHours == null) return;
+        var h = parseInt(newHours, 10);
+        if (!isNaN(h) && h >= 1) {
+          task.schedule = task.schedule || {};
+          task.schedule.type = 'interval_hours';
+          task.schedule.hours = h;
+          task.task_name = (task.task_name || '').replace(/每\d+小时/, '每' + h + '小时');
+          task.next_run_time = new Date(Date.now() + h * 3600000).toLocaleString('zh-CN', { hour12: false });
+        }
+        var newTop = window.prompt('修改抓取范围 Top N（当前 Top' + (((task.scope && task.scope.top_n) || 10)) + '）', ((task.scope && task.scope.top_n) || 10));
+        if (newTop != null) {
+          var n = parseInt(newTop, 10);
+          if (!isNaN(n) && n >= 1) {
+            task.scope = task.scope || {};
+            task.scope.top_n = n;
+            task.task_name = (task.task_name || '').replace(/Top\d+/, 'Top' + n);
+          }
+        }
+        alert('任务修改成功，新参数将在下次执行生效。');
+        openTaskDetailModal0005(taskId);
+      }
+
+      function cancelScheduledTaskFromDetail0005(taskId) {
+        if (!window.confirm('确认取消任务 ' + taskId + ' 吗？取消后将不再执行。')) return;
+        var task = getScheduledTaskById0005(taskId);
+        if (!task) return;
+        historyScheduledTasks.unshift(Object.assign({}, task, { status: '已取消', cancelled_at: new Date().toLocaleString('zh-CN', { hour12: false }) }));
+        currentScheduledTasks = currentScheduledTasks.filter(function (t) { return t.task_id !== taskId; });
+        renderCurrentTasksSidebar0005();
+        var modal = document.getElementById('taskDetailModal');
+        if (modal) {
+          modal.setAttribute('aria-hidden', 'true');
+          modal.classList.remove('is-open');
+        }
+      }
+
+      function runScheduledTaskOnce0005(taskId) {
+        var task = getScheduledTaskById0005(taskId);
+        if (!task) return;
+        var rec = { time: new Date().toLocaleString('zh-CN', { hour12: false }), count: (task.scope && task.scope.top_n) || 10, result: '已推送到工作台、飞书', remark: '手动触发' };
+        task.execution_records = task.execution_records || [];
+        task.execution_records.unshift(rec);
+        task.run_count = (task.run_count || 0) + 1;
+        task.last_result = '成功';
+        if (task.schedule && task.schedule.type === 'interval_hours') {
+          task.next_run_time = new Date(Date.now() + (task.schedule.hours || 1) * 3600000).toLocaleString('zh-CN', { hour12: false });
+        }
+        openTaskDetailModal0005(taskId);
+      }
+
+      function getSelectedHotspot0005() {
+        if (!lastHotspotList0005.length || selectedHotspotIndex0005 == null) return null;
+        var idx = selectedHotspotIndex0005 - 1;
+        if (idx < 0 || idx >= lastHotspotList0005.length) return null;
+        return lastHotspotList0005[idx];
+      }
+
+      function buildHotspotDetailReply0005(h, cardType) {
+        var heatStr = h.heat_label || (h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat || 0));
+        var trendCn = { rising: '上升', stable: '平稳', falling: '下降' }[h.trend] || h.trend || '—';
+        if (cardType === 'xhs') return '**热点详情**\n\n**标题**：' + h.title + '\n**热度**：' + heatStr + '（趋势：' + trendCn + '）\n**摘要**：' + (h.summary || '') + '\n' + ((h.related_keywords || []).length ? '**相关关键词**：' + h.related_keywords.join(' ') + '\n' : '') + (h.note_sample ? '**爆款笔记示例**：' + h.note_sample : '');
+        if (cardType === 'gt' || cardType === 'gt_rich') return '**热点详情**\n\n**热点ID**：' + (h.id || '') + '\n**英文标题**：' + h.title + '\n' + (h.local_language_title ? '**本地语言标题**：' + h.local_language_title + '\n' : '') + '**来源平台**：Google Trends\n**地区**：' + (h.market === 'th' ? '泰国' : h.market === 'id' ? '印尼' : '') + '\n' + (h.search_volume ? '**搜索量**：' + h.search_volume + '\n' : '') + (h.growth_pct ? '**增长幅度**：' + h.growth_pct + '\n' : '') + (h.started_at ? '**已开始时间**：' + h.started_at + '\n' : '') + '**趋势**：' + trendCn + '\n**摘要**：' + (h.summary || '') + '\n' + ((h.related_keywords || []).length ? '**趋势细分（相关关键词）**：' + h.related_keywords.join(' ') + '\n' : '') + (h.trend_chart_ascii ? '**24小时热度趋势**：\n' + h.trend_chart_ascii : '');
+        if (cardType === 'domestic') return '**热点详情**\n\n**标题**：' + h.title + '\n**来源**：' + (h.platform || h.source_platform || '') + '\n**热度**：' + heatStr + '（趋势：' + trendCn + '）\n**摘要**：' + (h.summary || '') + '\n' + ((h.related_keywords || []).length ? '**相关关键词**：' + h.related_keywords.join(' ') : '');
+        if (cardType === 'tt_reddit') return '**热点详情**\n\n**标题/关键词**：' + h.title + '\n**来源平台**：' + (h.platform || h.source_platform || '') + '\n**热度**：' + heatStr + '（趋势：' + trendCn + '）\n**摘要**：' + (h.summary || '') + '\n**风险等级**：' + (h.riskLevel === 'low' ? '低' : h.riskLevel === 'medium' ? '中' : '高') + '\n' + (h.keywords ? '**关键词**：' + h.keywords : '');
+        return '**' + h.title + '**\n热度：' + heatStr + '\n' + (h.summary || '');
+      }
+
+      function buildSingleHotspotMenu0005(h) {
+        var heatStr = h.heat_label || (h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat || 0));
+        if (lastHotspotSource0005 === 'xiaohongshu') return '你对 **' + h.title + '**（热度：' + heatStr + '）有什么需求？我可以帮你：\n\n1. 查看某条热点详情\n2. 生成小红书种草文案\n3. 导出结果\n\n直接回复数字 1～3 或说具体需求即可。';
+        if (lastHotspotSource0005 === 'google_trends' || lastHotspotSource0005 === 'overseas_google_trends') return '你对 **' + h.title + '**（' + (h.search_volume || heatStr) + '）有什么需求？我可以帮你：\n\n1. 查看热点详情\n2. 根据该热点生成社媒文案（TikTok/YouTube/种草号）\n3. 分析蹭点方向和风险提示\n4. 查找相似热点\n\n直接回复数字 1～4 或说具体需求即可。';
+        if (lastHotspotSource0005 === 'overseas_tt_reddit') return '你对 **' + h.title + '**（' + heatStr + '）有什么需求？我可以帮你：\n\n1. 查看热点详情\n2. 批量导出至飞书表格\n\n直接回复数字 1～2 或说具体需求即可。';
+        return '你对 **' + h.title + '**（热度：' + heatStr + '）有什么需求？我可以帮你：\n\n1. 生成 3 条 TikTok 文案\n2. 生成 YouTube 标题 + 简介\n3. 生成种草号推广文案（适配剧集推广）\n4. 分析这个热点的蹭点方向和风险提示\n5. 找 3 个相似热点，避免重复创作\n\n直接回复数字 1～5 或说具体需求即可。';
+      }
+
+      function buildCopyParamsQuestion0005(hotspotTitle) {
+        return '好的，为了根据「' + hotspotTitle + '」生成更精准的文案，请告诉我：\n\n1. 目标平台：TikTok / YouTube / 种草号？\n2. 目标语言：泰语 / 英语 / 中文？\n3. 风格偏好：活泼 / 专业 / 搞笑 / 走心？\n4. 是否需要植入剧集名称/关键词？（如《XXX》）\n5. 是否需要自动生成热门 Hashtag？\n\n可以一句话回复，例如：泰语，活泼，植入《爱的香气》，需要 Hashtag。';
+      }
+
+      function buildCopyParamsQuestionXHS0005() {
+        return '请补充：\n\n1. 风格：活泼 / 走心 / 干货？\n2. 是否植入剧集名称？（如《XXX》）\n\n可以一句话回复，例如：活泼，植入《XXX》。';
+      }
+
+      function parseCopyParamsXHS0005(text) {
+        var style = (text || '').indexOf('走心') !== -1 ? '走心' : (text || '').indexOf('干货') !== -1 ? '干货' : '活泼';
+        var m = (text || '').match(/[《"]([^》"]+)[》"]/);
+        return { style: style, showName: m ? m[1].trim() : null };
+      }
+
+      function buildCopyReplyXHS0005(h, params) {
+        var style = params.style || '活泼';
+        var showName = params.showName || '《XXX》';
+        var samples = [
+          { title: '跟着' + showName + '女主学伪素颜，手残党也能会！', body: '姐妹们！' + showName + '同款妆容我研究透了～\n\n✨ 底妆：轻薄打底，自然提亮\n✨ 眼妆：大地色系，伪素颜感拉满\n✨ 唇釉：豆沙色yyds\n\n评论区扣1发详细步骤～', tag: '#剧集同款 #伪素颜教程 #氛围感妆容' },
+          { title: showName + '同款氛围感妆容｜3分钟出门', body: '被闺蜜问爆的' + showName + '仿妆来啦！\n\n💄 重点：眼线要淡、腮红要显气色\n📌 用品在最后一张图\n\n收藏不迷路～', tag: '#剧集同款 #早八妆 #通勤妆' },
+          { title: '手把手教你在家复刻' + showName + '女主妆', body: '不挑皮、不踩雷的' + showName + '同款教程！\n\n步骤都标在图里了，跟着画就完事～\n\n❤️ 喜欢记得点个赞呀', tag: '#仿妆 #剧集仿妆 #教程' }
+        ];
+        var lines = ['基于热点 **' + h.title + '** 已按「' + style + '」风格生成 3 条可直接复制的小红书文案：\n'];
+        samples.forEach(function (s, i) {
+          lines.push('--- **第' + (i + 1) + '条** ---');
+          lines.push('**小红书爆款标题**\n' + s.title);
+          lines.push('**正文**\n' + s.body);
+          lines.push('**Hashtag**\n' + s.tag);
+          lines.push('');
+        });
+        return { text: lines.join('\n'), copyType: 'xhs', copyBlocks: samples };
+      }
+
+      function parseCopyParams0005(text) {
+        var t = (text || '').toLowerCase();
+        var platform = t.indexOf('youtube') !== -1 || text.indexOf('标题+简介') !== -1 ? 'youtube' : (text.indexOf('种草') !== -1 && text.indexOf('号') !== -1 ? '种草号' : 'tiktok');
+        var lang = text.indexOf('泰') !== -1 || text.indexOf('泰语') !== -1 ? 'th' : (text.indexOf('英') !== -1 || text.indexOf('英语') !== -1 ? 'en' : 'zh');
+        var style = text.indexOf('专业') !== -1 ? '专业' : text.indexOf('搞笑') !== -1 ? '搞笑' : text.indexOf('走心') !== -1 ? '走心' : '活泼';
+        var m = text.match(/[《"]([^》"]+)[》"]/);
+        var needHashtag = t.indexOf('hashtag') !== -1 || text.indexOf('话题') !== -1 || text.indexOf('标签') !== -1 || (text.indexOf('需要') !== -1 && text.indexOf('tag') !== -1);
+        return { platform: platform, language: lang, style: style, showName: m ? m[1].trim() : null, needHashtag: needHashtag };
+      }
+
+      function buildCopyReplyRefined0005(h, params) {
+        var platform = params.platform || 'tiktok';
+        var lang = params.language || 'zh';
+        var style = params.style || '活泼';
+        var showName = params.showName || '我们的剧集';
+        var needHashtag = params.needHashtag !== false;
+        var titleStyle = { 活泼: '轻松吸睛', 专业: '简洁专业', 搞笑: '幽默梗', 走心: '情感共鸣' }[style] || '活泼';
+        var hashtags = needHashtag ? '#热门剧集 #追剧 #TikTok趋势 #种草' : '';
+        var lines = ['基于热点 **' + h.title + '** 已按「' + platform + ' · ' + lang + ' · ' + style + '」生成 3 条可直接复制的文案：\n'];
+        for (var i = 1; i <= 3; i++) {
+          var title = '【' + titleStyle + '】' + h.title.substring(0, 20) + '… 结合「' + showName + '」' + style + '向';
+          var body = '这条热点「' + h.title + '」和「' + showName + '」太搭了！' + (h.summary || '').substring(0, 40) + '… 用剧情高光+情绪共鸣，' + style + '表达。';
+          if (lang === 'en') body = 'Trend: "' + h.title + '" meets "' + showName + '". ' + (h.summary || '').substring(0, 50) + '... ' + style + ' tone.';
+          if (lang === 'th') body = 'เทรนด์นี้เข้ากับซีรีส์เรา "' + showName + '" มาก! ' + style + ' tone.';
+          lines.push(i + '. 标题：' + title + '\n正文：' + body + (needHashtag ? '\nHashtag：' + hashtags : '') + '\n');
+        }
+        lines.push('如需改语言/风格或加剧集名，直接说即可。\n\n是否需要将本次热点+文案打包导出？可说「打包导出」或「同步 CMS」。');
+        return lines.join('');
+      }
+
+      function buildAnalyzeRiskReply0005(h) {
+        var heatStr = h.heat_label || (h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat || 0));
+        var trendCn = { rising: '上升', stable: '平稳', falling: '下降' }[h.trend] || h.trend;
+        var riskCn = { low: '低', medium: '中', high: '高' }[h.riskLevel] || h.riskLevel;
+        var directions = h.category === 'challenge' ? '适合做挑战视频、UGC 活动、台词跟读/二创挑战。' : (h.category === 'tv_series' ? '适合做剧情二创、角色向剪辑、话题讨论、封面/标题蹭热点。' : '适合做话题讨论、产品/剧集植入、情感向内容、热门 Hashtag 联动。');
+        var base = Math.floor((h.heat || 0) / 50000) * 1000;
+        var low = Math.max(1000, base - 2000);
+        var high = base + 5000;
+        var coreInfo = '热度 ' + heatStr + '，趋势 ' + trendCn + '，受众以 ' + (h.market || '—') + ' 区 ' + (h.category || '—') + ' 内容消费者为主。';
+        if (h.search_volume) coreInfo += ' 搜索量：' + h.search_volume + '。';
+        if (h.local_language_title) coreInfo += ' 本地语言标题：' + h.local_language_title + '。';
+        return '**热点：** ' + h.title + '\n\n**核心信息：** ' + coreInfo + '\n\n**蹭点方向：** ' + directions + '\n\n**风险提示：** 风险等级 ' + riskCn + '。' + (h.riskReason || getRiskSummary0005(h)) + '\n是否涉及敏感内容/版权：请结合具体素材再确认；与品牌调性冲突时建议规避。\n\n**效果预测：** 预估播放量区间约 ' + low + '～' + high + '，互动率约 3%～8%（视素材与投放节奏而定）。';
+      }
+
+      function findSimilar0005(h, n, pool) {
+        n = n || 3;
+        var list = pool && pool.length ? pool : hotspotMockList0005;
+        var others = list.filter(function (x) { return x.id !== h.id && (x.market === h.market || !h.market) && (x.category === h.category || !h.category); });
+        others.sort(function (a, b) { return (b.heat || 0) - (a.heat || 0); });
+        return others.slice(0, n);
+      }
+
+      function buildFindSimilarReply0005(h, similar) {
+        if (!similar.length) return '暂无同市场、同垂类的其他热点，可稍后再问或放宽范围。';
+        var lines = ['与「' + h.title + '」同市场、同垂类的 3 个相似热点（避免重复创作参考）：\n'];
+        similar.forEach(function (s, i) {
+          var heatStr = s.heat >= 10000 ? (Math.floor(s.heat / 10000) + '万+') : String(s.heat);
+          lines.push((i + 1) + '. ' + s.title + '（热度：' + heatStr + '）\n   ' + (s.summary || '').substring(0, 50) + '…\n');
+        });
+        return lines.join('');
+      }
+
+      function buildBatchTop3Reply0005(list) {
+        var sorted = list.slice().sort(function (a, b) { return (b.heat || 0) - (a.heat || 0); });
+        var top3 = sorted.slice(0, 3);
+        var lines = ['按热度排序，**最适合蹭的 Top3** 热点：\n'];
+        top3.forEach(function (h, i) {
+          var heatStr = h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat);
+          lines.push((i + 1) + '. ' + h.title + '（热度：' + heatStr + '，趋势：' + (h.trend || '') + '）\n   ' + (h.summary || '').substring(0, 50) + '…\n');
+        });
+        lastHotspotList0005 = top3;
+        lines.push('你可以回复「选第 1 条」对该热点做深度操作（生成文案/分析蹭点/找相似）。');
+        return lines.join('');
+      }
+
+      function buildBatchBriefReply0005(list) {
+        var lines = ['**批量蹭点分析简报**：\n'];
+        list.slice(0, 5).forEach(function (h, i) {
+          var heatStr = h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat);
+          var risk = h.riskLevel === 'low' ? '低' : '中/高';
+          lines.push((i + 1) + '. ' + h.title + '\n   热度：' + heatStr + ' · 风险：' + risk + ' · 蹭点：' + (h.summary || '').substring(0, 40) + '…\n');
+        });
+        return lines.join('');
+      }
+
+      function handleHotspotCombineQuery0005(text, marketCode, categoryCode) {
+        var list = fetchHotspotsFor0005(marketCode, categoryCode);
+        if (!list.length) return '我暂时没有找到合适的热点，你可以告诉我具体剧集名称，我再帮你重新匹配。';
+        var chosen = list[0];
+        var showHint = extractShowHint0005(text);
+        var base = formatHotspotBrief0005(chosen);
+        var riskSummary = getRiskSummary0005(chosen);
+        var plan = '基于你提到的剧集/内容「' + showHint + '」，我给你一个结合当前热点的种草思路示例：\n\n1）内容方向：\n   - 用剧中的人物关系 / 高光情节，去呼应当前热点中的情绪点或讨论点\n   - 在封面/标题里，把「剧名 + 热点关键词」同时出现，提升点击率\n\n2）素材建议：\n   - 从剧中截取 3～5 个高能片段，剪成 15～30 秒竖屏短视频\n   - 片头 3 秒直接抛出冲突或情绪爆点，再用字幕补充背景信息\n\n3）话题&标签：\n   - 结合当前平台上的原始话题标签\n   - 增加 1～2 个自定义品牌/剧集标签，方便后续沉淀资产\n\n4）风险提示：\n   - ' + riskSummary + '\n\n如果你愿意，我也可以直接基于这个热点和剧集「' + showHint + '」，帮你生成多语言的社媒文案。';
+        return '先给你看下这条热点的概要：\n\n' + base + '\n\n' + plan;
+      }
+
+      function handleHotspotCopyQuery0005(text, marketCode, categoryCode) {
+        var list = fetchHotspotsFor0005(marketCode, categoryCode);
+        if (!list.length) return '目前没有检索到合适的热点，你可以先告诉我：想结合哪部剧/活动 + 想投放的平台，我再给你写文案。';
+        var chosen = list[0];
+        var showHint = extractShowHint0005(text);
+        var platform = extractPlatformHint0005(text);
+        function formatBlock(title, arr) {
+          return title + '：\n' + arr.map(function (c, idx) { return (idx + 1) + '. ' + c; }).join('\n');
+        }
+        return ['我先帮你选了一条适合做种草的热点，并基于它生成了多语言文案示例：', formatHotspotBrief0005(chosen), formatBlock('【中文文案候选】', generateCopies0005(chosen, platform, 'zh', 3, showHint)), formatBlock('【English copies】', generateCopies0005(chosen, platform, 'en', 3, showHint)), formatBlock('【泰文文案候选】', generateCopies0005(chosen, platform, 'th', 3, showHint)), formatBlock('【Bahasa Indonesia】', generateCopies0005(chosen, platform, 'id', 3, showHint)), '如果有特定平台（如只投 TikTok / Twitter），或想强化某种调性（例如“更搞笑一点”），可以直接跟我说，我再帮你微调。'].join('\n\n');
+      }
+
+      function handleHotspotListQuery0005(text, marketCode, categoryCode, source) {
+        var list = fetchHotspotsFor0005(marketCode, categoryCode, source, text);
+        if (!list.length) return toHotspotReply0005('目前没有检索到符合条件的热点，可以稍后再问我，或者放宽市场/垂类范围。');
+        lastHotspotList0005 = list;
+        lastHotspotSource0005 = source;
+        flow0005 = 'list_shown';
+        selectedHotspotIndex0005 = null;
+        copyParams0005 = null;
+        var intro;
+        var batchActions = ['查看该热点详情', '根据热点生成文案', '导出当前热点列表为Excel'];
+        var refinementPrompt = null;
+        if (source === 'overseas_tt_reddit') {
+          intro = '已为你抓取 **TikTok（TT）与 Reddit TOP10 热点**，以结构化卡片展示如下：';
+          batchActions = ['批量导出至飞书表格'];
+          refinementPrompt = '当前为你返回了 TikTok 和 Reddit 的 TOP10 热点。你可以继续细化查询，例如：\n1. 是否需要限制媒体渠道，如只看 TT 或 Reddit？\n2. 是否想查询某个特定地区（如泰国、印尼）的热点？';
+        } else if (source === 'overseas_google_trends') {
+          intro = '已为你抓取 **泰国与印尼 Google Trends TOP10 热点**，以结构化卡片展示如下：';
+          batchActions = ['导出至Excel'];
+        } else if (source === 'domestic') {
+          intro = '已为你筛选「国内-微博/抖音-剧集类」的热点，共 ' + list.length + ' 条：';
+        } else if (source === 'xiaohongshu') {
+          intro = '已为你筛选「国内-小红书-' + (categoryCode === 'tv_series' ? '剧集类' : categoryCode === 'beauty' ? '美妆类' : categoryCode === 'celebrity' ? '明星类' : '') + ((text && text.indexOf('上升') !== -1) ? '-热度上升' : '') + '」的热点，共 ' + list.length + ' 条：';
+        } else if (source === 'google_trends') {
+          intro = '已为你筛选「' + (marketCode === 'th' ? '泰国' : marketCode === 'id' ? '印尼' : '欧美') + '-Google Trends-' + (categoryCode === 'tv_series' ? '剧集类' : '') + ((text && text.indexOf('上升') !== -1) ? '-24h热度上升' : '') + '」的热点，共 ' + list.length + ' 条：';
+        } else {
+          intro = '我帮你在【' + (marketCode || categoryCode ? ('市场：' + (marketCode || '-') + ' / 垂类：' + (categoryCode || '-')) : '全局默认范围') + '】下筛了几条今天适合运营关注的热点，点击下方卡片可对该热点进行深度操作：';
+        }
+        var cards = lastHotspotList0005.map(function (h) {
+          var heatStr = h.heat_label || (h.heat >= 10000 ? (Math.floor(h.heat / 10000) + '万+') : String(h.heat || 0));
+          var trendCn = { rising: '上升', stable: '平稳', falling: '下降' }[h.trend] || h.trend || '—';
+          var card = { id: h.id, title: h.title, summary: (h.summary || '').substring(0, 80) + ((h.summary && h.summary.length > 80) ? '…' : ''), heat: heatStr, trend: trendCn, riskLevel: h.riskLevel };
+          if (source === 'overseas_tt_reddit') {
+            card.cardType = 'tt_reddit';
+            card.platform = h.platform || h.source_platform;
+            card.keywords = h.keywords;
+          } else if (source === 'overseas_google_trends') {
+            card.cardType = 'gt_rich';
+            card.local_language_title = h.local_language_title;
+            card.region = h.market === 'th' ? '泰国' : h.market === 'id' ? '印尼' : '';
+            card.search_volume = h.search_volume;
+            card.growth_pct = h.growth_pct;
+            card.started_at = h.started_at;
+            card.related_keywords = h.related_keywords;
+            card.trend_chart_ascii = h.trend_chart_ascii;
+          } else if (source === 'domestic') {
+            card.cardType = 'domestic';
+            card.related_keywords = h.related_keywords;
+          } else if (source === 'xiaohongshu') {
+            card.cardType = 'xhs';
+            card.related_keywords = h.related_keywords;
+            card.note_sample = h.note_sample;
+          } else if (source === 'google_trends') {
+            card.cardType = 'gt';
+            card.local_language_title = h.local_language_title;
+            card.search_volume = h.search_volume;
+            card.related_keywords = h.related_keywords;
+          }
+          return card;
+        });
+        var opts = { hotspotCards: cards, batchActions: batchActions };
+        if (refinementPrompt) opts.refinementPrompt = refinementPrompt;
+        return toHotspotReply0005(intro, opts);
+      }
+
+      function handleHotspotQuery0005(text) {
+        var h = getSelectedHotspot0005();
+        if (!h && lastHotspotList0005.length) h = lastHotspotList0005[0];
+        if (flow0005 === 'waiting_copy_params' && h) {
+          copyParams0005 = copyParams0005 || {};
+          if (lastHotspotSource0005 === 'xiaohongshu') {
+            var parsedXhs = parseCopyParamsXHS0005(text);
+            copyParams0005.style = parsedXhs.style;
+            copyParams0005.showName = parsedXhs.showName;
+            flow0005 = 'idle';
+            var xhsResult = buildCopyReplyXHS0005(h, copyParams0005);
+            return toHotspotReply0005(xhsResult.text, { exportFollowUp: true, copyType: 'xhs', copyBlocks: xhsResult.copyBlocks });
+          }
+          var parsed = parseCopyParams0005(text);
+          copyParams0005.platform = parsed.platform || copyParams0005.platform;
+          copyParams0005.language = parsed.language || copyParams0005.language;
+          copyParams0005.style = parsed.style || copyParams0005.style;
+          copyParams0005.showName = parsed.showName || copyParams0005.showName;
+          copyParams0005.needHashtag = parsed.needHashtag !== undefined ? parsed.needHashtag : copyParams0005.needHashtag;
+          flow0005 = 'idle';
+          return toHotspotReply0005(buildCopyReplyRefined0005(h, copyParams0005), { exportFollowUp: true });
+        }
+        var marketAndCat = detectMarketAndCategory0005(text || '');
+        var marketCode = marketAndCat.marketCode;
+        var categoryCode = marketAndCat.categoryCode;
+        var intent = detectHotspotIntent0005(text || '');
+        if (intent === 'view_detail') {
+          if (!lastHotspotList0005.length) return toHotspotReply0005('请先完成一次热点查询，再选择「查看该热点详情」。');
+          selectedHotspotIndex0005 = 1;
+          var hFirst = lastHotspotList0005[0];
+          var cardType = lastHotspotSource0005 === 'xiaohongshu' ? 'xhs' : lastHotspotSource0005 === 'google_trends' ? 'gt' : lastHotspotSource0005 === 'overseas_google_trends' ? 'gt_rich' : lastHotspotSource0005 === 'overseas_tt_reddit' ? 'tt_reddit' : (lastHotspotSource0005 === 'domestic' ? 'domestic' : null);
+          flow0005 = 'idle';
+          return toHotspotReply0005(buildHotspotDetailReply0005(hFirst, cardType));
+        }
+        if (intent === 'scheduled_task') {
+          if (text.indexOf('取消') !== -1) {
+            var match = currentScheduledTasks.filter(function (t) { return t.task_name && text.indexOf(t.task_name.substring(0, 8)) !== -1; })[0] || currentScheduledTasks[0];
+            if (match) {
+              historyScheduledTasks.unshift(Object.assign({}, match, { status: '已取消', cancelled_at: new Date().toLocaleString('zh-CN', { hour12: false }) }));
+              currentScheduledTasks = currentScheduledTasks.filter(function (t) { return t.task_id !== match.task_id; });
+              renderCurrentTasksSidebar0005();
+              flow0005 = 'idle';
+              return toHotspotReply0005('已取消定时任务：' + match.task_name);
+            }
+            return toHotspotReply0005('未找到匹配的定时任务，请说明任务名称或ID。');
+          }
+          scheduledTaskParams0005 = parseScheduledTaskParams0005(text);
+          flow0005 = 'waiting_scheduled_confirm';
+          var summary = '**已解析定时任务**\n\n任务名称：' + scheduledTaskParams0005.task_name + '\n定时频率：' + (scheduledTaskParams0005.schedule.type === 'interval_hours' ? '每' + (scheduledTaskParams0005.schedule.hours || 1) + '小时' : '每天' + (scheduledTaskParams0005.schedule.hour || 9) + '点') + '\n抓取渠道：' + scheduledTaskParams0005.channel + '\n抓取范围：Top' + (scheduledTaskParams0005.scope.top_n || 10) + '\n推送渠道：' + (scheduledTaskParams0005.push_targets || []).join('、') + '\n\n请确认后点击「确认创建」或输入确认。';
+          return toHotspotReply0005(summary, { scheduledTaskConfirm: true });
+        }
+        if (intent === 'scheduled_task_confirm') {
+          if (!scheduledTaskParams0005) return toHotspotReply0005('未找到待确认的定时任务，请重新输入设置指令。');
+          var task = createScheduledTask0005(scheduledTaskParams0005);
+          scheduledTaskParams0005 = null;
+          flow0005 = 'idle';
+          renderCurrentTasksSidebar0005();
+          return toHotspotReply0005('任务已创建：**' + task.task_id + '**（' + task.task_name + '），已加入「当前任务」列表。');
+        }
+        if (intent === 'select_hotspot') {
+          var m = text.match(/选\s*第\s*(\d+)\s*条/) || text.match(/第\s*(\d+)\s*条/);
+          var num = m ? parseInt(m[1], 10) : 1;
+          if (lastHotspotList0005.length === 0) return toHotspotReply0005('请先查热点（如「今天泰国适合种草的热点有哪些？」），再回复「选第 N 条」。');
+          if (num < 1 || num > lastHotspotList0005.length) return toHotspotReply0005('序号超出范围，请说「选第 1 条」～「选第 ' + lastHotspotList0005.length + '」之间。');
+          selectedHotspotIndex0005 = num;
+          flow0005 = 'hotspot_selected';
+          copyParams0005 = null;
+          var selected = lastHotspotList0005[num - 1];
+          var menuActions = lastHotspotSource0005 === 'xiaohongshu' ? ['查看这条热点详情', '给这条热点生成3条小红书文案', '导出结果'] : (lastHotspotSource0005 === 'google_trends' || lastHotspotSource0005 === 'overseas_google_trends') ? ['查看热点详情', '根据该热点生成社媒文案', '分析蹭点方向和风险提示', '查找相似热点'] : lastHotspotSource0005 === 'overseas_tt_reddit' ? ['查看热点详情', '批量导出至飞书表格'] : ['帮我生成3条TikTok文案', '帮我生成YouTube标题+简介', '帮我生成种草号推广文案（适配剧集推广）', '分析这个热点的蹭点方向和风险提示', '帮我找3个相似热点，避免重复创作'];
+          return toHotspotReply0005(buildSingleHotspotMenu0005(selected), { hotspotMenu: true, actions: menuActions });
+        }
+        if (intent === 'menu_option') {
+          var option = parseInt(text.trim(), 10);
+          var selectedHotspot = getSelectedHotspot0005();
+          if (!selectedHotspot) return toHotspotReply0005('请先点击某条热点卡片或回复「选第 N 条」选中一条热点。');
+          if (lastHotspotSource0005 === 'xiaohongshu') {
+            if (option === 1) return toHotspotReply0005(buildHotspotDetailReply0005(selectedHotspot, 'xhs'));
+            if (option === 2) {
+              flow0005 = 'waiting_copy_params';
+              copyParams0005 = { platform: 'xiaohongshu' };
+              return toHotspotReply0005(buildCopyParamsQuestionXHS0005(selectedHotspot.title), { copyParamsQuestion: true });
+            }
+            if (option === 3) return toHotspotReply0005('当前共有 **' + lastHotspotList0005.length + '** 条热点可导出。输入「导出」保存为 Excel，或「打包导出」将热点+已生成文案一并导出。');
+          } else if (lastHotspotSource0005 === 'google_trends' || lastHotspotSource0005 === 'overseas_google_trends') {
+            var gtCardType = lastHotspotSource0005 === 'overseas_google_trends' ? 'gt_rich' : 'gt';
+            if (option === 1) return toHotspotReply0005(buildHotspotDetailReply0005(selectedHotspot, gtCardType));
+            if (option === 2) {
+              flow0005 = 'waiting_copy_params';
+              copyParams0005 = { platform: 'tiktok' };
+              return toHotspotReply0005(buildCopyParamsQuestion0005(selectedHotspot.title), { copyParamsQuestion: true });
+            }
+            if (option === 3) return toHotspotReply0005(buildAnalyzeRiskReply0005(selectedHotspot));
+            if (option === 4) return toHotspotReply0005(buildFindSimilarReply0005(selectedHotspot, findSimilar0005(selectedHotspot, 3, lastHotspotSource0005 === 'overseas_google_trends' ? lastHotspotList0005 : null)));
+          } else if (lastHotspotSource0005 === 'overseas_tt_reddit') {
+            if (option === 1) return toHotspotReply0005(buildHotspotDetailReply0005(selectedHotspot, 'tt_reddit'));
+            if (option === 2) return toHotspotReply0005('已为当前 **' + lastHotspotList0005.length + '** 条热点生成可导入飞书表格的 CSV。点击「下载 CSV（可导入飞书）」保存。', { exportFeishuCsv: true });
+          } else {
+            if (option === 1 || option === 2 || option === 3) {
+              flow0005 = 'waiting_copy_params';
+              copyParams0005 = { platform: option === 1 ? 'tiktok' : option === 2 ? 'youtube' : '种草号' };
+              return toHotspotReply0005(buildCopyParamsQuestion0005(selectedHotspot.title), { copyParamsQuestion: true });
+            }
+            if (option === 4) return toHotspotReply0005(buildAnalyzeRiskReply0005(selectedHotspot));
+            if (option === 5) return toHotspotReply0005(buildFindSimilarReply0005(selectedHotspot, findSimilar0005(selectedHotspot, 3)));
+          }
+        }
+        if (intent === 'analyze_risk') {
+          if (!h) return toHotspotReply0005('请先查热点并点击某条热点卡片再说「分析蹭点」。');
+          return toHotspotReply0005(buildAnalyzeRiskReply0005(h));
+        }
+        if (intent === 'find_similar') {
+          if (!h && lastHotspotList0005.length) h = lastHotspotList0005[0];
+          if (!h) return toHotspotReply0005('请先点击某条热点卡片，再说「找相似热点」。');
+          return toHotspotReply0005(buildFindSimilarReply0005(h, findSimilar0005(h, 3)));
+        }
+        if (intent === 'batch_export_feishu') {
+          if (!lastHotspotList0005.length) return toHotspotReply0005('当前没有可导出的热点列表，请先完成一次热点查询。');
+          return toHotspotReply0005('已为当前 **' + lastHotspotList0005.length + '** 条热点生成可导入飞书表格的结构化数据（表头：标题、来源平台、热度、趋势、摘要、风险等级等）。点击「下载 CSV」保存后，可在飞书多维表格中导入。', { exportFeishuCsv: true });
+        }
+        if (intent === 'batch_export') {
+          if (!lastHotspotList0005.length) return toHotspotReply0005('当前没有可导出的热点列表，请先完成一次热点查询。');
+          return toHotspotReply0005('当前共有 **' + lastHotspotList0005.length + '** 条热点可导出。\n\n你可以：\n· 输入「导出」保存为 Excel/CSV 存档；\n· 说「打包导出」将本次热点+已生成的文案一并导出；\n· 说「同步 CMS」了解如何同步到内容管理系统。');
+        }
+        if (intent === 'batch_top3') {
+          if (!lastHotspotList0005.length) return toHotspotReply0005('请先查热点，再说「按热度排序 Top3」。');
+          return toHotspotReply0005(buildBatchTop3Reply0005(lastHotspotList0005));
+        }
+        if (intent === 'batch_brief') {
+          if (!lastHotspotList0005.length) return toHotspotReply0005('请先查热点，再说「批量蹭点分析简报」。');
+          return toHotspotReply0005(buildBatchBriefReply0005(lastHotspotList0005));
+        }
+        if (intent === 'export_pack') return toHotspotReply0005('可以将本次查询的 **' + lastHotspotList0005.length + '** 条热点与已生成的文案打包导出为 Excel，方便给团队使用。\n\n当前会话中若已生成过文案，导出时将包含「热点列表」与「文案」两部分。\n输入「导出」即可保存到本地。');
+        if (intent === 'sync_cms') return toHotspotReply0005('将文案同步到内容管理系统（CMS）需对接贵司的 CMS 接口。\n\n当前 Demo 支持：生成文案后「打包导出」Excel，由运营手动上传或通过内部工具导入 CMS；后续可在此接入「一键同步到 CMS」API。');
+        if (intent === 'generate_copy') {
+          if (lastHotspotList0005.length && selectedHotspotIndex0005 == null) selectedHotspotIndex0005 = 1;
+          var hCopy = getSelectedHotspot0005() || lastHotspotList0005[0];
+          if (!hCopy) return toHotspotReply0005('请先查热点（如「国内热点 帮我查微博剧集热点」），再选择「根据热点生成文案」。');
+          if (lastHotspotSource0005 === 'xiaohongshu') {
+            flow0005 = 'waiting_copy_params';
+            copyParams0005 = { platform: 'xiaohongshu' };
+            return toHotspotReply0005(buildCopyParamsQuestionXHS0005(hCopy.title), { copyParamsQuestion: true });
+          }
+          if (!copyParams0005 || !copyParams0005.platform) {
+            flow0005 = 'waiting_copy_params';
+            copyParams0005 = { platform: 'tiktok' };
+            return toHotspotReply0005(buildCopyParamsQuestion0005(hCopy.title), { copyParamsQuestion: true });
+          }
+          flow0005 = 'idle';
+          return toHotspotReply0005(buildCopyReplyRefined0005(hCopy, copyParams0005), { exportFollowUp: true });
+        }
+        if (intent === 'combine_with_show') return toHotspotReply0005(handleHotspotCombineQuery0005(text, marketCode, categoryCode));
+        if ((text || '').indexOf('多语言文案') !== -1) return toHotspotReply0005(handleHotspotCopyQuery0005(text, marketCode, categoryCode));
+        return handleHotspotListQuery0005(text, marketCode, categoryCode, detectSource0005(text));
+      }
       var greetingSection = document.querySelector('.greeting-section');
       var hasSentOnce = false;
 
-      // ---------- 数据洞察：TV 端周报模拟数据 ----------
+      // ---------- 数据洞察：TV 端周报（【2026.2.27】TV端周数据PDF 刚性对齐，2.20-2.26）----------
       var lastAnalystReportType = null;
       var TV_WEEKLY_MOCK_DATA = {
         period: '2026.2.20-2.26',
@@ -559,58 +1476,205 @@
           dauShareWow: 0.92,
           playDurationShare: 36.75,
           playDurationShareWow: -0.18
-        }
+        },
+        byChannel: [
+          { name: 'Google', last: 185200, current: 173800, change: -6.16 },
+          { name: '马来西亚', last: 98200, current: 92100, change: -6.22 },
+          { name: '其他渠道', last: 482500, current: 359471, change: -6.35 }
+        ],
+        byRegion: [
+          { name: '华东', last: 198200, current: 185900, change: -6.21 },
+          { name: '华南', last: 142100, current: 133200, change: -6.26 },
+          { name: '华北', last: 131400, current: 123100, change: -6.32 },
+          { name: '华中', last: 76800, current: 72100, change: -6.12 },
+          { name: '其他', last: 108800, current: 111071, change: -6.28 }
+        ],
+        byVendor: [
+          { name: '海信', last: 175200, current: 164300, change: -6.22 },
+          { name: '创维', last: 137600, current: 129100, change: -6.18 },
+          { name: 'TCL', last: 118800, current: 111400, change: -6.23 },
+          { name: '长虹', last: 75000, current: 70300, change: -6.27 },
+          { name: '其他', last: 118771, current: 150271, change: -6.35 }
+        ],
+        byContent: [
+          { name: '头部剧集A', playUV: 285000, duration: 420000 },
+          { name: '新剧B', playUV: 32000, duration: 28000 },
+          { name: '新剧C', playUV: 18000, duration: 15000 }
+        ]
       };
 
       function isTVWeeklyReportRequest(text) {
         if (!text || text.indexOf('数据洞察分析师') === -1) return false;
         var t = text.replace(/\s+/g, ' ');
-        return (
-          (t.indexOf('TV端数据') !== -1 || t.indexOf('TV') !== -1) &&
-          (t.indexOf('周报') !== -1 || t.indexOf('周报数据') !== -1)
-        );
+        return (t.indexOf('TV端数据') !== -1 || t.indexOf('TV') !== -1) && (t.indexOf('周报') !== -1 || t.indexOf('周报数据') !== -1);
       }
 
       function buildTVWeeklyFirstResponse() {
         var cp = TV_WEEKLY_MOCK_DATA.comparePeriod;
         var d = TV_WEEKLY_MOCK_DATA.summary;
         var intro =
-          '【本周 TV 端数据表现概览】DAU 环比明显下滑，核心诱因为头部剧集收官、新上剧集表现偏弱，内容供给断层导致拉新与留存乏力；播放时长降幅远低于 DAU，靠存量用户单内容消费时长拉长缓冲跌幅，全地区、全厂商渠道 DAU 同步下滑，无明显逆势区域。\n\n';
+          '**本周数据表现**：DAU 环比明显下滑，核心诱因是**头部剧集收官、新上剧集表现大幅偏弱**，内容供给断层导致拉新与留存乏力；播放时长降幅远低于 DAU，靠存量用户单内容消费时长拉长缓冲跌幅，**全地区、全厂商渠道 DAU 同步下滑**，无明显逆势区域。\n\n';
         var dataCardBlock =
-          '【爱奇艺 TV 端周度核心数据（' +
-          (cp || '2.20-2.26') +
-          '】\n' +
-          '· 日均活跃用户（DAU）：' +
-          (d && d.dau ? d.dau.toLocaleString() : '—') +
-          ' | 环比↓' +
-          (d && d.dauWow != null ? Math.abs(d.dauWow).toFixed(2) : '—') +
-          '%\n' +
-          '· 总播放时长：' +
-          (d && d.playDurationHours
-            ? d.playDurationHours.toLocaleString()
-            : '—') +
-          ' 小时 | 环比↓' +
-          (d && d.playDurationWow != null
-            ? Math.abs(d.playDurationWow).toFixed(2)
-            : '—') +
-          '%\n' +
-          '· TV 端 DAU 全平台占比：' +
-          (d && d.dauShare != null ? d.dauShare.toFixed(2) : '—') +
-          '% | 环比↑' +
-          (d && d.dauShareWow != null ? d.dauShareWow.toFixed(2) : '—') +
-          'PP\n' +
-          '· TV 端播放时长全平台占比：' +
-          (d && d.playDurationShare != null
-            ? d.playDurationShare.toFixed(2)
-            : '—') +
-          '% | 环比↓' +
-          (d && d.playDurationShareWow != null
-            ? Math.abs(d.playDurationShareWow).toFixed(2)
-            : '—') +
-          'PP\n';
+          '**【爱奇艺 TV 端周度核心数据（2.20-2.26）】**\n\n' +
+          '对比周期：' + cp + ' | 终端范围：TVA 全渠道\n\n' +
+          '✅ **日均活跃用户（DAU）**：' + d.dau.toLocaleString() + ' | 环比↓' + Math.abs(d.dauWow).toFixed(2) + '% | 核心原因：头部剧集收官，新剧表现较弱，内容拉新不足\n\n' +
+          '✅ **总播放时长**：' + d.playDurationHours.toLocaleString() + ' 小时 | 环比↓' + Math.abs(d.playDurationWow).toFixed(2) + '% | 核心原因：存量用户单内容消费时长提升，缓冲下滑幅度\n\n' +
+          '✅ **TV 端 DAU 全平台占比**：' + d.dauShare.toFixed(2) + '% | 环比↑' + d.dauShareWow.toFixed(2) + 'PP | 核心原因：其他平台跌幅更大，TV 端韧性更强\n\n' +
+          '✅ **TV 端播放时长全平台占比**：' + d.playDurationShare.toFixed(2) + '% | 环比↓' + Math.abs(d.playDurationShareWow).toFixed(2) + 'PP | 核心原因：移动端微剧时长拉升，TV 端无增量\n\n' +
+          '✅ 除核心大盘外，本周**全地区、全厂商 DAU 均呈下滑态势**，无逆势渠道。\n\n';
         var tail =
-          '如果你需要更细的拆解（例如按地区、按厂商、按内容），可以继续在当前对话里提问，比如：“按地区拆一下 DAU 下滑情况” 或 “看一下重点厂商渠道的变化”。';
-        return intro + dataCardBlock + '\n' + tail;
+          '以下是为您生成的智能深度追问卡片，点击即可直接获取对应维度详细分析：\n\n' +
+          '💡 您也可以直接输入问题，进行针对性发散提问～';
+        return {
+          contentIntro: intro,
+          dataCardContent: dataCardBlock,
+          contentTail: tail,
+          suggestionCards: [
+            { category: '业务问题定位', title: '新剧表现不佳具体数据拆解' },
+            { category: '维度拆解分析', title: '分地区 DAU 下滑幅度排行' },
+            { category: '维度拆解分析', title: '分厂商渠道 DAU 变化明细' }
+          ]
+        };
+      }
+
+      function buildTVWeeklyFollowUp(question) {
+        var q = (question || '').trim();
+        var sug = [];
+        var content = '';
+        var tableData = null;
+        var ch = TV_WEEKLY_MOCK_DATA.byChannel;
+        var reg = TV_WEEKLY_MOCK_DATA.byRegion;
+        var ven = TV_WEEKLY_MOCK_DATA.byVendor;
+        var cap = TV_WEEKLY_MOCK_DATA.byContent;
+
+        if (q.indexOf('马来西亚') !== -1) {
+          var row = ch[1];
+          content =
+            '**结论先行**：**马来西亚**渠道 TV 端 DAU 本周环比↓' +
+            Math.abs(row.change).toFixed(2) +
+            '%，与大盘一致，无逆势表现。\n\n' +
+            '**数据支撑**（下表为周报口径，单位：DAU）：\n\n[TABLE]\n\n**原因分析**：头部剧集收官、**新上剧集表现大幅偏弱**，内容拉新乏力，马来西亚渠道与全盘同步承压。\n\n**业务建议**：关注新剧在马来区推荐与运营资源是否给足。';
+          tableData = {
+            headers: ['指标', '上周', '本周', '变化'],
+            rows: [
+              [
+                row.name,
+                row.last.toLocaleString(),
+                row.current.toLocaleString(),
+                row.change.toFixed(2) + '%'
+              ]
+            ]
+          };
+          sug = [
+            { category: '核心数据深挖', title: 'Google渠道数据拆解' },
+            { category: '维度拆解分析', title: '分地区DAU下滑幅度排行' }
+          ];
+        } else if (q.indexOf('Google') !== -1) {
+          var rowG = ch[0];
+          content =
+            '**结论先行**：**Google**渠道 TV 端 DAU 本周环比↓' +
+            Math.abs(rowG.change).toFixed(2) +
+            '%，与大盘同步下滑。\n\n' +
+            '**数据支撑**（周报口径）：\n\n[TABLE]\n\n**原因分析**：**头部剧集收官、新剧表现大幅偏弱**，全渠道 DAU 全线下滑，Google 渠道无例外。\n\n**业务建议**：排查 Google 渠道发版与内容露出是否与头部断档有关。';
+          tableData = {
+            headers: ['渠道', '上周', '本周', '变化'],
+            rows: [
+              [
+                rowG.name,
+                rowG.last.toLocaleString(),
+                rowG.current.toLocaleString(),
+                rowG.change.toFixed(2) + '%'
+              ]
+            ]
+          };
+          sug = [
+            { category: '核心数据深挖', title: '马来西亚DAU变化分析' },
+            { category: '业务问题定位', title: '新剧表现不佳具体数据拆解' }
+          ];
+        } else if (
+          q.indexOf('新剧') !== -1 &&
+          (q.indexOf('不佳') !== -1 || q.indexOf('表现') !== -1) &&
+          (q.indexOf('数据') !== -1 || q.indexOf('拆解') !== -1)
+        ) {
+          content =
+            '**核心结论**：本周核心新剧 **《成何体统》站内全地区表现显著弱于同期头部陆剧**，**播放 UV、播放时长、KR 人次**三大指标均处于下风，是 TV 端 DAU 下滑的**核心内容诱因**。\n\n' +
+            '**【新剧核心指标对比图】**\n\n[CHART_IMAGE]\n\n' +
+            '【智能 SUG 追问卡片】';
+          sug = [
+            { category: '新剧深挖', title: '《成何体统》分地区播放数据拆解' },
+            { category: '新剧深挖', title: '新剧用户流失率核心原因分析' },
+            { category: '新剧深挖', title: '头部剧数据差距补位方案' }
+          ];
+          return { content: content, suggestionCards: sug, chartImageUrl: 'images/成何体统.png' };
+        } else if (
+          q.indexOf('地区') !== -1 &&
+          (q.indexOf('排行') !== -1 ||
+            q.indexOf('下滑') !== -1 ||
+            q.indexOf('幅度') !== -1)
+        ) {
+          content =
+            '**结论先行**：**全地区 DAU 均环比下滑**，华东、华南、华北降幅居前，与大盘一致，无明显逆势区域。\n\n' +
+            '**数据支撑**（周报口径，上周/本周/变化）：\n\n[TABLE]\n\n**原因分析**：**头部剧集收官、新剧表现大幅偏弱**，全地区同步承压。\n\n**业务建议**：重点区域需保障新剧与头部内容在 TV 端的露出与运营。';
+          tableData = {
+            headers: ['地区', '上周', '本周', '变化'],
+            rows: reg.map(function (r) {
+              return [
+                r.name,
+                r.last.toLocaleString(),
+                r.current.toLocaleString(),
+                r.change.toFixed(2) + '%'
+              ];
+            })
+          };
+          sug = [
+            { category: '业务问题定位', title: '新剧表现不佳具体数据拆解' },
+            { category: '维度拆解分析', title: '分厂商渠道DAU变化明细' }
+          ];
+        } else if (q.indexOf('厂商') !== -1 || q.indexOf('明细') !== -1) {
+          content =
+            '**结论先行**：**全厂商渠道 DAU 均环比下滑**，海信、创维、TCL 降幅与大盘一致，无逆势厂商。\n\n' +
+            '**数据支撑**（周报口径，上周/本周/变化）：\n\n[TABLE]\n\n**原因分析**：**头部剧集收官、新剧表现大幅偏弱**，内容断层导致全厂商 DAU 同步下滑。\n\n**业务建议**：与各厂商对齐新剧发版与资源位排期。';
+          tableData = {
+            headers: ['厂商/渠道', '上周', '本周', '变化'],
+            rows: ven.map(function (r) {
+              return [
+                r.name,
+                r.last.toLocaleString(),
+                r.current.toLocaleString(),
+                r.change.toFixed(2) + '%'
+              ];
+            })
+          };
+          sug = [
+            { category: '核心数据深挖', title: 'Google渠道数据拆解' },
+            { category: '业务问题定位', title: '新剧表现不佳具体数据拆解' }
+          ];
+        } else if (
+          q.indexOf('DAU') !== -1 &&
+          (q.indexOf('下滑') !== -1 ||
+            q.indexOf('原因') !== -1 ||
+            q.indexOf('环比') !== -1)
+        ) {
+          content =
+            '**结论先行**：本周 TV 端 DAU 环比↓6.28%，核心诱因是**头部剧集收官、新上剧集表现大幅偏弱**，内容供给断层导致拉新与留存乏力。\n\n' +
+            '**数据支撑**：DAU 由上周约 66.7 万降至本周 62.5 万；播放时长环比仅↓1.40%，存量用户单内容消费时长拉长缓冲跌幅。\n\n' +
+            '**原因分析**：新接档剧集在 TV 端表现大幅偏弱，用户打开与停留意愿下降，**新剧贡献度极低**。\n\n' +
+            '**业务建议**：优先保障头部内容在 TV 端排播与露出；强化新剧在 TV 端推荐与运营。';
+          sug = [
+            { category: '业务问题定位', title: '新剧表现不佳具体数据拆解' },
+            { category: '维度拆解分析', title: '分地区DAU下滑幅度排行' }
+          ];
+        } else {
+          content =
+            '**结论先行**：已根据您的问题做了下钻分析，结论与周报一致。\n\n' +
+            '**数据支撑**：详见周报核心指标（DAU 625,371、环比↓6.28%；播放时长 822,164 小时、环比↓1.40%；占比 26.46% / 36.75%）及分渠道、分地区、分厂商维度。\n\n' +
+            '**原因分析**：**头部剧集收官、新剧表现大幅偏弱**是本周 TV 端全线下滑的核心原因。\n\n**业务建议**：可点击下方卡片或输入具体维度继续追问。';
+          sug = [
+            { category: '核心数据深挖', title: '马来西亚DAU变化分析' },
+            { category: '维度拆解分析', title: '分厂商渠道DAU变化明细' }
+          ];
+        }
+        return { content: content, suggestionCards: sug, tableData: tableData };
       }
 
       // BI 场景：提示卡片 & 数据场景助手
@@ -662,11 +1726,351 @@
         } else {
           chatBox.classList.remove('has-content');
         }
-        updatePromptCardsVisibility();
       }
 
-      input.addEventListener('input', updateState);
+      input.addEventListener('input', function () {
+        updateState();
+        if (typeof updatePromptCardsVisibility === 'function') updatePromptCardsVisibility();
+      });
       updateState();
+
+      var hotspotSugsAbove = document.getElementById('hotspotSugsAbove');
+      function showHotspotSugsAboveInput() {
+        if (hotspotSugsAbove) {
+          hotspotSugsAbove.style.display = 'flex';
+          hotspotSugsAbove.setAttribute('aria-hidden', 'false');
+        }
+      }
+      function hideHotspotSugsAboveInput() {
+        if (hotspotSugsAbove) {
+          hotspotSugsAbove.style.display = 'none';
+          hotspotSugsAbove.setAttribute('aria-hidden', 'true');
+        }
+      }
+      function updateHotspotSugsVisibility() {
+        var v = (input.value || '').trim();
+        if (v === '@热点抓取师' || v === '@热点抓取师（0005）') showHotspotSugsAboveInput();
+        else hideHotspotSugsAboveInput();
+      }
+      input.addEventListener('input', updateHotspotSugsVisibility);
+      if (hotspotSugsAbove) {
+        hotspotSugsAbove.querySelectorAll('.chat-sug-chip[data-sug]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var sug = btn.getAttribute('data-sug');
+            if (!sug) return;
+            var cur = (input.value || '').trim();
+            input.value = (cur === '@热点抓取师' || cur === '@热点抓取师（0005）') ? (cur + ' ' + sug) : sug;
+            hideHotspotSugsAboveInput();
+            updateState();
+            input.focus();
+          });
+        });
+      }
+
+      var mentionDropdown = document.getElementById('mentionDropdown');
+      var mentionDropdownList = document.getElementById('mentionDropdownList');
+      var mentionStartIndex = 0;
+      var mentionFilteredList = [];
+      var mentionSelectedIndex = 0;
+
+      function getColleagueListForMention() {
+        var cards = document.querySelectorAll('.silicon-card');
+        var list = [];
+        cards.forEach(function (card) {
+          var nameEl = card.querySelector('.silicon-name');
+          var mention = card.getAttribute('data-mention');
+          if (mention && nameEl) list.push({ mention: mention, name: nameEl.textContent.trim() });
+        });
+        return list;
+      }
+
+      function escapeHtml(str) {
+        if (str == null) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function formatSimpleBold(text) {
+        if (!text) return '';
+        var parts = text.split(/\*\*(.*?)\*\*/g);
+        var html = '';
+        for (var i = 0; i < parts.length; i++) {
+          html += (i % 2 === 1) ? '<strong>' + escapeHtml(parts[i]) + '</strong>' : escapeHtml(parts[i]);
+        }
+        return html;
+      }
+
+      function updateMentionSelection() {
+        if (!mentionDropdownList) return;
+        mentionDropdownList.querySelectorAll('.mention-dropdown-item').forEach(function (item, idx) {
+          item.classList.toggle('is-selected', idx === mentionSelectedIndex);
+        });
+      }
+
+      function closeMentionDropdown() {
+        if (mentionDropdown) {
+          mentionDropdown.classList.remove('is-open');
+          mentionDropdown.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      function insertMentionAt(mention) {
+        var val = input.value || '';
+        var cursor = input.selectionStart;
+        var start = mentionStartIndex;
+        input.value = val.substring(0, start) + mention + ' ' + val.substring(cursor);
+        input.selectionStart = input.selectionEnd = start + mention.length + 1;
+        updateState();
+        updateHotspotSugsVisibility();
+      }
+
+      function showMentionDropdown(startIndex, query) {
+        var all = getColleagueListForMention();
+        query = (query || '').trim().toLowerCase();
+        mentionFilteredList = query ? all.filter(function (item) {
+          return item.mention.toLowerCase().indexOf(query) !== -1 || item.name.toLowerCase().indexOf(query) !== -1;
+        }) : all;
+        mentionStartIndex = startIndex;
+        mentionSelectedIndex = 0;
+        if (!mentionDropdown || !mentionDropdownList) return;
+        if (mentionFilteredList.length === 0) {
+          closeMentionDropdown();
+          return;
+        }
+        mentionDropdownList.innerHTML = '';
+        mentionFilteredList.forEach(function (item, idx) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'mention-dropdown-item' + (idx === 0 ? ' is-selected' : '');
+          btn.setAttribute('role', 'option');
+          btn.setAttribute('data-mention', item.mention);
+          btn.innerHTML = '<span class="mention-name">' + escapeHtml(item.name) + '</span> <span class="mention-tag">' + escapeHtml(item.mention) + '</span>';
+          btn.addEventListener('click', function () {
+            insertMentionAt(item.mention);
+            closeMentionDropdown();
+          });
+          mentionDropdownList.appendChild(btn);
+        });
+        mentionDropdown.classList.add('is-open');
+        mentionDropdown.setAttribute('aria-hidden', 'false');
+        updateMentionSelection();
+      }
+
+      input.addEventListener('input', function () {
+        var val = input.value || '';
+        var cursor = input.selectionStart;
+        var textBefore = val.substring(0, cursor);
+        var lastAt = textBefore.lastIndexOf('@');
+        if (lastAt === -1) {
+          closeMentionDropdown();
+          return;
+        }
+        var query = textBefore.substring(lastAt + 1);
+        if (/\s/.test(query)) {
+          closeMentionDropdown();
+          return;
+        }
+        showMentionDropdown(lastAt, query);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (mentionDropdown && mentionDropdown.classList.contains('is-open') && e.target !== input && !mentionDropdown.contains(e.target)) {
+          closeMentionDropdown();
+        }
+      });
+
+      function sendHotspotAction(actionText) {
+        messages.push({ role: 'user', content: actionText });
+        var result = handleHotspotQuery0005(actionText);
+        var replyContent = typeof result === 'object' && result.text !== undefined ? result.text : result;
+        var replyPayload = { role: 'assistant', content: replyContent };
+        if (typeof result === 'object') {
+          if (result.hotspotCards) replyPayload.hotspotCards = result.hotspotCards;
+          if (result.batchActions) replyPayload.batchActions = result.batchActions;
+          if (result.refinementPrompt) replyPayload.refinementPrompt = result.refinementPrompt;
+          if (result.exportFeishuCsv) replyPayload.exportFeishuCsv = result.exportFeishuCsv;
+          if (result.scheduledTaskConfirm) replyPayload.scheduledTaskConfirm = result.scheduledTaskConfirm;
+          if (result.hotspotMenu) replyPayload.hotspotMenu = result.hotspotMenu;
+          if (result.actions) replyPayload.actions = result.actions;
+          if (result.copyParamsQuestion) replyPayload.copyParamsQuestion = result.copyParamsQuestion;
+          if (result.exportFollowUp) replyPayload.exportFollowUp = result.exportFollowUp;
+          if (result.copyType) replyPayload.copyType = result.copyType;
+          if (result.copyBlocks) replyPayload.copyBlocks = result.copyBlocks;
+        }
+        messages.push(replyPayload);
+        if (greetingSection) greetingSection.classList.add('hidden');
+        renderMessages();
+        requestAnimationFrame(function () {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+      }
+
+      function selectHotspotCardAndShowMenu(index) {
+        selectedHotspotIndex0005 = index;
+        flow0005 = 'hotspot_selected';
+        copyParams0005 = null;
+        var h = lastHotspotList0005[index - 1];
+        if (!h) return;
+        var menuActions = lastHotspotSource0005 === 'xiaohongshu' ? ['查看这条热点详情', '给这条热点生成3条小红书文案', '导出结果'] : (lastHotspotSource0005 === 'google_trends' || lastHotspotSource0005 === 'overseas_google_trends') ? ['查看热点详情', '根据该热点生成社媒文案', '分析蹭点方向和风险提示', '查找相似热点'] : lastHotspotSource0005 === 'overseas_tt_reddit' ? ['查看热点详情', '批量导出至飞书表格'] : ['帮我生成3条TikTok文案', '帮我生成YouTube标题+简介', '帮我生成种草号推广文案（适配剧集推广）', '分析这个热点的蹭点方向和风险提示', '帮我找3个相似热点，避免重复创作'];
+        messages.push({ role: 'assistant', content: buildSingleHotspotMenu0005(h), hotspotMenu: true, actions: menuActions });
+        if (greetingSection) greetingSection.classList.add('hidden');
+        renderMessages();
+        requestAnimationFrame(function () {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+      }
+
+      var TYPEWRITER_MS = 28;
+
+      function getMessageSegments(msg) {
+        var segments = [];
+        if (msg.contentIntro) {
+          if (msg.contentIntro.trim()) segments.push({ type: 'text', content: msg.contentIntro });
+          if (msg.dataCardContent) segments.push({ type: 'dataCard', content: msg.dataCardContent });
+          var tail = (msg.contentTail || '').replace(/\[折线图：[^\]]*\]\s*/g, '').replace(/\[柱状图：[^\]]*\]\s*/g, '');
+          if (tail.trim()) segments.push({ type: 'text', content: tail });
+          if (msg.chartData && msg.chartData.length) segments.push({ type: 'chart', data: msg.chartData, id: 'chart-line', label: '柱状图：TV端本周DAU分渠道对比' });
+          if (msg.chartDataBar && msg.chartDataBar.length) segments.push({ type: 'chartBar', data: msg.chartDataBar, id: 'chart-bar', label: '柱状图：TOP5地区DAU降幅对比' });
+          if (msg.suggestionCards && msg.suggestionCards.length) segments.push({ type: 'suggestionCards', cards: msg.suggestionCards });
+          return segments;
+        }
+        var content = (msg.content || '').trim();
+        if (msg.chartImageUrl || (msg.tableData && msg.tableData.headers)) {
+          var re = /(\[CHART_IMAGE\]|\[TABLE\])/g;
+          var parts = content.split(re);
+          for (var i = 0; i < parts.length; i++) {
+            if (parts[i] === '[CHART_IMAGE]') segments.push({ type: 'chartImage', url: msg.chartImageUrl });
+            else if (parts[i] === '[TABLE]') segments.push({ type: 'table', tableData: msg.tableData });
+            else if (parts[i]) {
+              var t = parts[i].trim();
+              if (t) segments.push({ type: 'text', content: t });
+            }
+          }
+        } else if (content) {
+          segments.push({ type: 'text', content: content });
+        }
+        if (msg.suggestionCards && msg.suggestionCards.length) segments.push({ type: 'suggestionCards', cards: msg.suggestionCards });
+        return segments;
+      }
+
+      function runTypewriterText(textEl, fullText, speedMs, onDone) {
+        if (!fullText || fullText.length === 0) {
+          if (typeof onDone === 'function') onDone();
+          return;
+        }
+        var idx = 0;
+        textEl.textContent = '';
+        function tick() {
+          if (idx >= fullText.length) {
+            if (typeof marked !== 'undefined') textEl.innerHTML = marked.parse(fullText);
+            else textEl.textContent = fullText;
+            if (typeof onDone === 'function') onDone();
+            return;
+          }
+          idx += 1;
+          textEl.textContent = fullText.slice(0, idx);
+          setTimeout(tick, speedMs);
+        }
+        setTimeout(tick, speedMs);
+      }
+
+      function appendSegmentBlock(container, segment, msg, domIdx) {
+        if (segment.type === 'chartImage' && segment.url) {
+          var wrap = document.createElement('div');
+          wrap.className = 'new-drama-chart-wrap';
+          var img = document.createElement('img');
+          img.src = segment.url;
+          img.alt = '《成何体统》VS 同期头部陆剧 播放 UV / 播放时长 / KR 人次跨周期趋势对比';
+          img.className = 'new-drama-chart-img';
+          img.onerror = function () { this.style.display = 'none'; };
+          wrap.appendChild(img);
+          container.appendChild(wrap);
+        } else if (segment.type === 'table' && segment.tableData && segment.tableData.headers) {
+          var tbl = document.createElement('table');
+          tbl.className = 'analysis-table';
+          var thead = document.createElement('thead');
+          var trH = document.createElement('tr');
+          segment.tableData.headers.forEach(function (h) {
+            var th = document.createElement('th');
+            th.textContent = h;
+            trH.appendChild(th);
+          });
+          thead.appendChild(trH);
+          tbl.appendChild(thead);
+          var tbody = document.createElement('tbody');
+          segment.tableData.rows.forEach(function (row) {
+            var tr = document.createElement('tr');
+            row.forEach(function (cell) {
+              var td = document.createElement('td');
+              td.textContent = cell;
+              if (typeof cell === 'string' && cell.indexOf('-') === 0 && (cell.indexOf('%') !== -1 || /^-[\d.]+\d*$/.test(cell))) td.classList.add('data-down');
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          tbl.appendChild(tbody);
+          container.appendChild(tbl);
+        } else if (segment.type === 'dataCard' && segment.content) {
+          var cardDiv = document.createElement('div');
+          cardDiv.className = 'tv-data-card';
+          cardDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(segment.content) : segment.content.replace(/\n/g, '<br>');
+          container.appendChild(cardDiv);
+        } else if (segment.type === 'chart' && segment.data) {
+          var chartLabel = document.createElement('div');
+          chartLabel.className = 'data-chart-label';
+          chartLabel.textContent = segment.label || '';
+          container.appendChild(chartLabel);
+          var chartWrap = document.createElement('div');
+          chartWrap.className = 'data-chart-placeholder';
+          chartWrap.setAttribute('data-chart-id', segment.id + '-' + domIdx);
+          chartWrap.setAttribute('data-chart-type', 'bar');
+          chartWrap.setAttribute('data-chart-data', JSON.stringify(segment.data));
+          container.appendChild(chartWrap);
+        } else if (segment.type === 'chartBar' && segment.data) {
+          var barLabel = document.createElement('div');
+          barLabel.className = 'data-chart-label';
+          barLabel.textContent = segment.label || '';
+          container.appendChild(barLabel);
+          var barWrap = document.createElement('div');
+          barWrap.className = 'data-chart-placeholder';
+          barWrap.setAttribute('data-chart-id', segment.id + '-' + domIdx);
+          barWrap.setAttribute('data-chart-type', 'bar');
+          barWrap.setAttribute('data-chart-data', JSON.stringify(segment.data));
+          container.appendChild(barWrap);
+        } else if (segment.type === 'suggestionCards' && segment.cards && segment.cards.length) {
+          var cardsWrap = document.createElement('div');
+          cardsWrap.className = 'suggestion-cards-wrap';
+          var byCategory = {};
+          segment.cards.forEach(function (item) {
+            var cat = typeof item === 'object' && item.category ? item.category : '推荐追问';
+            var title = typeof item === 'object' && item.title ? item.title : item;
+            if (!byCategory[cat]) byCategory[cat] = [];
+            byCategory[cat].push(title);
+          });
+          var catPrefix = { '核心数据深挖': '🔍 ', '业务问题定位': '⚠️ ', '维度拆解分析': '🌍 ', '新剧深挖': '💡 ' };
+          Object.keys(byCategory).forEach(function (cat) {
+            var catLabel = document.createElement('div');
+            catLabel.className = 'suggestion-cards-category';
+            catLabel.textContent = (catPrefix[cat] || '') + '【' + cat + '】';
+            cardsWrap.appendChild(catLabel);
+            byCategory[cat].forEach(function (title) {
+              var btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'suggestion-card';
+              btn.textContent = title;
+              btn.addEventListener('click', function () {
+                var prefix = '@数据洞察分析师（0004） TV端数据 ';
+                input.value = prefix + title;
+                updateState();
+                handleSend();
+              });
+              cardsWrap.appendChild(btn);
+            });
+          });
+          container.appendChild(cardsWrap);
+        }
+      }
 
       function showPromptGroup(name) {
         currentPromptGroup = name;
@@ -719,35 +2123,434 @@
         if (!messagesContainer) return;
         messagesContainer.innerHTML = '';
 
-        messages.forEach(function (msg) {
+        messages.forEach(function (msg, idx) {
           var el = document.createElement('div');
           el.classList.add('msg');
           if (msg.role === 'user') {
             el.classList.add('msg-user');
+            el.textContent = msg.content;
           } else if (msg.role === 'designer') {
             el.classList.add('msg-designer');
+            if (idx === messages.length - 1) {
+              var twWrap = document.createElement('div');
+              twWrap.className = 'analysis-report typewriter-wrap';
+              el.appendChild(twWrap);
+              runTypewriterText(twWrap, msg.content || '', TYPEWRITER_MS, function () {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+              });
+            } else {
+              el.textContent = msg.content;
+            }
           } else {
             el.classList.add('msg-assistant');
-          }
-          if (msg.hasPreviewButton) {
-            var textWrap = document.createElement('div');
-            textWrap.textContent = msg.content || '';
-            el.appendChild(textWrap);
-            var previewBtn = document.createElement('button');
-            previewBtn.type = 'button';
-            previewBtn.className = 'preview-btn';
-            previewBtn.textContent = '预览';
-            previewBtn.addEventListener('click', function () {
-              openPreviewModal(msg);
-            });
-            el.appendChild(previewBtn);
-          } else {
-            el.textContent = msg.content;
+            var hasStructured = msg.contentIntro || msg.suggestionCards || msg.chartData || msg.chartDataBar;
+            var isLastAndAssistant = idx === messages.length - 1 && (msg.content || msg.contentIntro);
+            if (hasStructured) {
+              el.classList.add('msg-analysis');
+              var reportWrap = document.createElement('div');
+              reportWrap.className = 'analysis-report';
+              if (isLastAndAssistant) {
+                var segments = getMessageSegments(msg);
+                var segIdx = 0;
+                function runNextSegment() {
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                  if (segIdx >= segments.length) {
+                    initAnalysisCharts();
+                    return;
+                  }
+                  var seg = segments[segIdx++];
+                  if (seg.type === 'text') {
+                    var textDiv = document.createElement('div');
+                    textDiv.className = 'typewriter-segment';
+                    reportWrap.appendChild(textDiv);
+                    runTypewriterText(textDiv, seg.content, TYPEWRITER_MS, function () {
+                      runNextSegment();
+                    });
+                  } else {
+                    appendSegmentBlock(reportWrap, seg, msg, idx);
+                    runNextSegment();
+                  }
+                }
+                el.appendChild(reportWrap);
+                runNextSegment();
+              } else if (msg.contentIntro) {
+                var introHtml = typeof marked !== 'undefined' ? marked.parse(msg.contentIntro) : msg.contentIntro.replace(/\n/g, '<br>');
+                reportWrap.innerHTML = introHtml;
+                if (msg.dataCardContent) {
+                  var cardDiv = document.createElement('div');
+                  cardDiv.className = 'tv-data-card';
+                  var cardHtml = typeof marked !== 'undefined' ? marked.parse(msg.dataCardContent) : msg.dataCardContent.replace(/\n/g, '<br>');
+                  cardDiv.innerHTML = cardHtml;
+                  reportWrap.appendChild(cardDiv);
+                }
+                if (msg.contentTail) {
+                  var tailForMd = (msg.contentTail || '').replace(/\[折线图：[^\]]*\]\s*/g, '').replace(/\[柱状图：[^\]]*\]\s*/g, '');
+                  var tailHtml = typeof marked !== 'undefined' ? marked.parse(tailForMd) : tailForMd.replace(/\n/g, '<br>');
+                  var tailDiv = document.createElement('div');
+                  tailDiv.className = 'analysis-report-tail';
+                  tailDiv.innerHTML = tailHtml;
+                  reportWrap.appendChild(tailDiv);
+                }
+              } else if (msg.content) {
+                var contentForMd = (msg.content || '').replace(/\[Chart:[^\]]*\]\s*/g, '').trim();
+                var afterChart = '';
+                if (msg.chartImageUrl) {
+                  var imgParts = contentForMd.split('[CHART_IMAGE]');
+                  if (imgParts.length >= 2) {
+                    contentForMd = (imgParts[0] || '').trim();
+                    afterChart = (imgParts[1] || '').trim();
+                  }
+                } else if (msg.chartLabel) {
+                  var chartRegex = /\[折线图：[^\]]*\]\s*/g;
+                  var chartParts = contentForMd.split(chartRegex);
+                  if (chartParts.length >= 2) {
+                    contentForMd = (chartParts[0] || '').trim();
+                    afterChart = (chartParts[1] || '').trim();
+                  }
+                }
+                if (msg.tableData && msg.tableData.headers && msg.tableData.rows) {
+                  var parts = contentForMd.split('[TABLE]');
+                  var part0 = (parts[0] || '').trim();
+                  var part1 = (parts[1] || '').trim();
+                  reportWrap.innerHTML = typeof marked !== 'undefined' ? marked.parse(part0) : part0.replace(/\n/g, '<br>');
+                  var tbl = document.createElement('table');
+                  tbl.className = 'analysis-table';
+                  var thead = document.createElement('thead');
+                  var trH = document.createElement('tr');
+                  msg.tableData.headers.forEach(function (h) {
+                    var th = document.createElement('th');
+                    th.textContent = h;
+                    trH.appendChild(th);
+                  });
+                  thead.appendChild(trH);
+                  tbl.appendChild(thead);
+                  var tbody = document.createElement('tbody');
+                  msg.tableData.rows.forEach(function (row) {
+                    var tr = document.createElement('tr');
+                    row.forEach(function (cell) {
+                      var td = document.createElement('td');
+                      td.textContent = cell;
+                      if (typeof cell === 'string' && cell.indexOf('-') === 0 && (cell.indexOf('%') !== -1 || /^-[\d.]+\d*$/.test(cell))) td.classList.add('data-down');
+                      tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                  });
+                  tbl.appendChild(tbody);
+                  reportWrap.appendChild(tbl);
+                  if (part1) {
+                    var tailDiv = document.createElement('div');
+                    tailDiv.className = 'analysis-report-tail';
+                    tailDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(part1) : part1.replace(/\n/g, '<br>');
+                    reportWrap.appendChild(tailDiv);
+                  }
+                } else if (msg.chartImageUrl) {
+                  reportWrap.innerHTML = typeof marked !== 'undefined' ? marked.parse(contentForMd) : contentForMd.replace(/\n/g, '<br>');
+                  var chartImgWrap = document.createElement('div');
+                  chartImgWrap.className = 'new-drama-chart-wrap';
+                  var chartImg = document.createElement('img');
+                  chartImg.src = msg.chartImageUrl;
+                  chartImg.alt = '《成何体统》VS 同期头部陆剧 播放 UV / 播放时长 / KR 人次跨周期趋势对比';
+                  chartImg.className = 'new-drama-chart-img';
+                  chartImg.onerror = function () { this.style.display = 'none'; };
+                  chartImgWrap.appendChild(chartImg);
+                  reportWrap.appendChild(chartImgWrap);
+                  if (afterChart) {
+                    var afterDiv = document.createElement('div');
+                    afterDiv.className = 'analysis-report-tail';
+                    afterDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(afterChart) : afterChart.replace(/\n/g, '<br>');
+                    reportWrap.appendChild(afterDiv);
+                  }
+                } else if (msg.chartLabel) {
+                  reportWrap.innerHTML = typeof marked !== 'undefined' ? marked.parse(contentForMd) : contentForMd.replace(/\n/g, '<br>');
+                  var chartLabelDiv = document.createElement('div');
+                  chartLabelDiv.className = 'chart-label-highlight';
+                  chartLabelDiv.textContent = '折线图：' + msg.chartLabel;
+                  reportWrap.appendChild(chartLabelDiv);
+                  if (afterChart) {
+                    var afterDiv = document.createElement('div');
+                    afterDiv.className = 'analysis-report-tail';
+                    afterDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(afterChart) : afterChart.replace(/\n/g, '<br>');
+                    reportWrap.appendChild(afterDiv);
+                  }
+                } else {
+                  reportWrap.innerHTML = typeof marked !== 'undefined' ? marked.parse(contentForMd) : contentForMd.replace(/\n/g, '<br>');
+                }
+              }
+              if (!isLastAndAssistant) {
+                el.appendChild(reportWrap);
+              }
+              if (!isLastAndAssistant && msg.chartData && msg.chartData.length) {
+                var chartLabel = document.createElement('div');
+                chartLabel.className = 'data-chart-label';
+                chartLabel.textContent = '柱状图：TV端本周DAU分渠道对比';
+                el.appendChild(chartLabel);
+                var chartWrap = document.createElement('div');
+                chartWrap.className = 'data-chart-placeholder';
+                chartWrap.setAttribute('data-chart-id', 'chart-line-' + idx);
+                chartWrap.setAttribute('data-chart-type', 'bar');
+                chartWrap.setAttribute('data-chart-data', JSON.stringify(msg.chartData));
+                el.appendChild(chartWrap);
+              }
+              if (!isLastAndAssistant && msg.chartDataBar && msg.chartDataBar.length) {
+                var chartBarLabel = document.createElement('div');
+                chartBarLabel.className = 'data-chart-label';
+                chartBarLabel.textContent = '柱状图：TOP5地区DAU降幅对比';
+                el.appendChild(chartBarLabel);
+                var chartBarWrap = document.createElement('div');
+                chartBarWrap.className = 'data-chart-placeholder';
+                chartBarWrap.setAttribute('data-chart-id', 'chart-bar-' + idx);
+                chartBarWrap.setAttribute('data-chart-type', 'bar');
+                chartBarWrap.setAttribute('data-chart-data', JSON.stringify(msg.chartDataBar));
+                el.appendChild(chartBarWrap);
+              }
+              if (!isLastAndAssistant && msg.suggestionCards && msg.suggestionCards.length) {
+                var cardsWrap = document.createElement('div');
+                cardsWrap.className = 'suggestion-cards-wrap';
+                var byCategory = {};
+                msg.suggestionCards.forEach(function (item) {
+                  var cat = typeof item === 'object' && item.category ? item.category : '推荐追问';
+                  var title = typeof item === 'object' && item.title ? item.title : item;
+                  if (!byCategory[cat]) byCategory[cat] = [];
+                  byCategory[cat].push(title);
+                });
+                var catPrefix = { '核心数据深挖': '🔍 ', '业务问题定位': '⚠️ ', '维度拆解分析': '🌍 ', '新剧深挖': '💡 ' };
+                Object.keys(byCategory).forEach(function (cat) {
+                  var catLabel = document.createElement('div');
+                  catLabel.className = 'suggestion-cards-category';
+                  catLabel.textContent = (catPrefix[cat] || '') + '【' + cat + '】';
+                  cardsWrap.appendChild(catLabel);
+                  byCategory[cat].forEach(function (title) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'suggestion-card';
+                    btn.textContent = title;
+                    btn.addEventListener('click', function () {
+                      var prefix = '@数据洞察分析师（0004） TV端数据 ';
+                      input.value = prefix + title;
+                      updateState();
+                      handleSend();
+                    });
+                    cardsWrap.appendChild(btn);
+                  });
+                });
+                el.appendChild(cardsWrap);
+              }
+            } else {
+              if (msg.hotspotCards || msg.batchActions || msg.refinementPrompt || msg.scheduledTaskConfirm || msg.exportFeishuCsv || msg.hotspotMenu || msg.exportFollowUp) {
+                var hotspotTextWrap = document.createElement('div');
+                hotspotTextWrap.className = 'msg-text' + (msg.copyType === 'xhs' ? ' msg-text--copy-xhs' : '');
+                hotspotTextWrap.style.whiteSpace = 'pre-wrap';
+                if (msg.content) {
+                  if (idx === messages.length - 1) {
+                    hotspotTextWrap.className += ' analysis-report typewriter-wrap';
+                    runTypewriterText(hotspotTextWrap, msg.content || '', TYPEWRITER_MS, function () {
+                      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    });
+                  } else if ((msg.content || '').indexOf('**') !== -1) {
+                    hotspotTextWrap.innerHTML = formatSimpleBold(msg.content || '');
+                  } else {
+                    hotspotTextWrap.textContent = msg.content || '';
+                  }
+                  el.appendChild(hotspotTextWrap);
+                }
+
+                if (msg.hotspotCards && msg.hotspotCards.length) {
+                  var hotspotCardsWrap = document.createElement('div');
+                  hotspotCardsWrap.className = 'hotspot-cards-wrap';
+                  msg.hotspotCards.forEach(function (card, i) {
+                    var cardEl = document.createElement('div');
+                    cardEl.className = 'hotspot-msg-card' + (card.cardType === 'xhs' ? ' hotspot-msg-card--xhs' : card.cardType === 'gt' ? ' hotspot-msg-card--gt' : card.cardType === 'gt_rich' ? ' hotspot-msg-card--gt-rich' : card.cardType === 'domestic' ? ' hotspot-msg-card--domestic' : card.cardType === 'tt_reddit' ? ' hotspot-msg-card--tt-reddit' : '');
+                    var metaHtml = '<span class="hotspot-msg-card-heat">热度 ' + escapeHtml(card.heat) + '</span> · 趋势 ' + escapeHtml(card.trend) + (card.riskLevel ? ' · ' + (card.riskLevel === 'low' ? '低风险' : '需注意风险') : '');
+                    var extra = '';
+                    if ((card.cardType === 'domestic' || card.cardType === 'xhs' || card.cardType === 'gt' || card.cardType === 'gt_rich') && card.related_keywords && card.related_keywords.length) extra += '<div class="hotspot-msg-card-keywords">' + escapeHtml(card.related_keywords.join(' ')) + '</div>';
+                    if (card.cardType === 'xhs' && card.note_sample) extra += '<div class="hotspot-msg-card-note-sample">' + escapeHtml(card.note_sample) + '</div>';
+                    if ((card.cardType === 'gt' || card.cardType === 'gt_rich') && card.local_language_title) extra += '<div class="hotspot-msg-card-local-title">' + escapeHtml(card.local_language_title) + '</div>';
+                    if ((card.cardType === 'gt' || card.cardType === 'gt_rich') && card.search_volume) extra += '<div class="hotspot-msg-card-search-vol">' + escapeHtml(card.search_volume) + '</div>';
+                    if (card.cardType === 'gt_rich' && card.growth_pct) extra += '<div class="hotspot-msg-card-growth">' + escapeHtml(card.growth_pct) + ' · ' + escapeHtml(card.started_at || '') + '</div>';
+                    if (card.cardType === 'gt_rich' && card.trend_chart_ascii) extra += '<pre class="hotspot-msg-card-trend-ascii">' + escapeHtml(card.trend_chart_ascii) + '</pre>';
+                    if (card.cardType === 'tt_reddit' && card.platform) extra += '<div class="hotspot-msg-card-platform">' + escapeHtml(card.platform) + '</div>';
+                    if (card.cardType === 'tt_reddit' && card.keywords) extra += '<div class="hotspot-msg-card-keywords">' + escapeHtml(card.keywords) + '</div>';
+                    cardEl.innerHTML = '<div class="hotspot-msg-card-title">' + escapeHtml(card.title) + '</div><div class="hotspot-msg-card-meta">' + metaHtml + '</div><div class="hotspot-msg-card-summary">' + escapeHtml(card.summary || '') + '</div>' + extra + '<div class="hotspot-msg-card-hint">点击可对该热点进行深度操作</div>';
+                    (function (cardIndex) {
+                      cardEl.addEventListener('click', function () { selectHotspotCardAndShowMenu(cardIndex); });
+                    })(i + 1);
+                    hotspotCardsWrap.appendChild(cardEl);
+                  });
+                  el.appendChild(hotspotCardsWrap);
+                }
+
+                if (msg.batchActions && msg.batchActions.length) {
+                  var batchWrap = document.createElement('div');
+                  batchWrap.className = 'chat-batch-actions';
+                  msg.batchActions.forEach(function (label) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chat-action-chip';
+                    btn.textContent = label;
+                    btn.addEventListener('click', function () { sendHotspotAction(label); });
+                    batchWrap.appendChild(btn);
+                  });
+                  el.appendChild(batchWrap);
+                }
+
+                if (msg.refinementPrompt) {
+                  var refWrap = document.createElement('div');
+                  refWrap.className = 'chat-refinement-prompt';
+                  refWrap.style.whiteSpace = 'pre-wrap';
+                  refWrap.textContent = msg.refinementPrompt;
+                  el.appendChild(refWrap);
+                }
+
+                if (msg.scheduledTaskConfirm) {
+                  var confirmWrap = document.createElement('div');
+                  confirmWrap.className = 'chat-batch-actions';
+                  var confirmBtn = document.createElement('button');
+                  confirmBtn.type = 'button';
+                  confirmBtn.className = 'chat-action-chip';
+                  confirmBtn.textContent = '确认创建';
+                  confirmBtn.addEventListener('click', function () { sendHotspotAction('确认创建'); });
+                  confirmWrap.appendChild(confirmBtn);
+                  el.appendChild(confirmWrap);
+                }
+
+                if (msg.exportFeishuCsv) {
+                  var feishuWrap = document.createElement('div');
+                  feishuWrap.className = 'chat-export-feishu';
+                  var feishuBtn = document.createElement('button');
+                  feishuBtn.type = 'button';
+                  feishuBtn.className = 'chat-action-chip';
+                  feishuBtn.textContent = '下载 CSV（可导入飞书）';
+                  feishuBtn.addEventListener('click', function () {
+                    var csv = buildHotspotCsvForFeishu0005();
+                    if (!csv) return;
+                    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = '热点列表_飞书导入_' + (new Date().toISOString().slice(0, 10)) + '.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  });
+                  feishuWrap.appendChild(feishuBtn);
+                  el.appendChild(feishuWrap);
+                }
+
+                if (msg.hotspotMenu && msg.actions && msg.actions.length) {
+                  var singleWrap = document.createElement('div');
+                  singleWrap.className = 'chat-single-actions';
+                  msg.actions.forEach(function (label) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chat-action-chip';
+                    btn.textContent = label;
+                    btn.addEventListener('click', function () { sendHotspotAction(label); });
+                    singleWrap.appendChild(btn);
+                  });
+                  el.appendChild(singleWrap);
+                }
+
+                if (msg.exportFollowUp) {
+                  var exportWrap = document.createElement('div');
+                  exportWrap.className = 'chat-export-followup';
+                  var exportTip = document.createElement('p');
+                  exportTip.className = 'chat-export-followup-tip';
+                  exportTip.textContent = '是否需要将热点+文案导出为Excel？';
+                  exportWrap.appendChild(exportTip);
+                  ['打包导出Excel', '同步到CMS'].forEach(function (btnText, exportIdx) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chat-action-chip';
+                    btn.textContent = btnText;
+                    btn.addEventListener('click', function () { sendHotspotAction(exportIdx === 0 ? '打包导出' : '同步 CMS'); });
+                    exportWrap.appendChild(btn);
+                  });
+                  el.appendChild(exportWrap);
+                }
+              } else if (msg.hasPreviewButton) {
+                var wrap = document.createElement('div');
+                wrap.className = 'analysis-report typewriter-wrap';
+                el.appendChild(wrap);
+                var previewBtn = document.createElement('button');
+                previewBtn.type = 'button';
+                previewBtn.className = 'preview-btn';
+                previewBtn.textContent = '预览';
+                if (idx === messages.length - 1) {
+                  runTypewriterText(wrap, msg.content || '', TYPEWRITER_MS, function () {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                  });
+                } else {
+                  wrap.innerHTML = (msg.content || '').replace(/\n/g, '<br>');
+                }
+                previewBtn.addEventListener('click', function () {
+                  openPreviewModal(msg);
+                });
+                el.appendChild(previewBtn);
+              } else if (msg.role === 'assistant' && msg.content) {
+                var plainWrap = document.createElement('div');
+                plainWrap.className = 'analysis-report typewriter-wrap';
+                el.appendChild(plainWrap);
+                if (idx === messages.length - 1) {
+                  runTypewriterText(plainWrap, msg.content, TYPEWRITER_MS, function () {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                  });
+                } else {
+                  plainWrap.innerHTML = typeof marked !== 'undefined' ? marked.parse(msg.content) : msg.content.replace(/\n/g, '<br>');
+                }
+              } else {
+                el.textContent = msg.content || '';
+              }
+            }
           }
           messagesContainer.appendChild(el);
         });
 
+        initAnalysisCharts();
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function initAnalysisCharts() {
+        if (typeof echarts === 'undefined') return;
+        var placeholders = messagesContainer.querySelectorAll('.data-chart-placeholder[data-chart-data]');
+        placeholders.forEach(function (el) {
+          if (el._chartInited) return;
+          var raw = el.getAttribute('data-chart-data');
+          var chartType = el.getAttribute('data-chart-type') || 'bar';
+          if (!raw) return;
+          try {
+            var data = JSON.parse(raw);
+            var chart = echarts.init(el);
+            var names = data.map(function (r) { return r.name; });
+            if (chartType === 'line' && data[0] && data[0].date) {
+              var dates = data.map(function (r) { return r.date; });
+              var dau = data.map(function (r) { return r.dau; });
+              chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'category', data: dates },
+                yAxis: { type: 'value', name: 'DAU' },
+                series: [{ type: 'line', data: dau, smooth: true, itemStyle: { color: '#00b964' }, lineStyle: { color: '#00b964' } }]
+              });
+            } else if (data[0] && (data[0].change != null || data[0].current != null)) {
+              var values = data.map(function (r) { return r.change != null ? r.change : r.current; });
+              var yName = data[0].change != null ? '环比变化(%)' : 'DAU';
+              var colors = values.map(function (v) { return v < 0 ? '#e85d5d' : '#00b964'; });
+              chart.setOption({
+                grid: { left: 55, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'category', data: names },
+                yAxis: { type: 'value', name: yName },
+                series: [{ type: 'bar', data: values, itemStyle: { color: function (params) { return colors[params.dataIndex]; } } }]
+              });
+            } else {
+              var shareValues = data.map(function (r) { return r.durationShare != null ? r.durationShare : r.share; });
+              chart.setOption({
+                grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                xAxis: { type: 'category', data: names },
+                yAxis: { type: 'value', name: '占比(%)' },
+                series: [{ type: 'bar', data: shareValues, itemStyle: { color: '#00b964' } }]
+              });
+            }
+            el._chartInited = true;
+          } catch (e) {}
+        });
       }
 
       function openPreviewModal(msg) {
@@ -937,7 +2740,7 @@
               role: 'assistant',
               content: '当前为\"大生意人\"。',
               hasPreviewButton: true,
-              previewImageUrl: 'images/大生意人.JPG',
+              previewImageUrl: 'images/大生意人.jpg',
               previewTitle: '「大生意人」TV 跨端导流图片预览'
             };
           }
@@ -949,7 +2752,7 @@
               role: 'assistant',
               content: '当前为成何体统。',
               hasPreviewButton: true,
-              previewImageUrl: 'images/成何体统.JPG',
+              previewImageUrl: 'images/成何体统.jpg',
               previewTitle: '《成何体统》线上配置预览'
             };
           }
@@ -971,6 +2774,16 @@
         var text = (input.value || '').trim();
         if (!text) return;
 
+        var containsHotspotMention =
+          text.indexOf('@热点抓取师') !== -1 ||
+          text.indexOf('@热点抓取师（0005）') !== -1;
+        var onlyHotspotMention = containsHotspotMention && /^@热点抓取师(（0005）)?\s*$/i.test(text);
+        if (onlyHotspotMention) {
+          showHotspotSugsAboveInput();
+          input.focus();
+          return;
+        }
+
         messages.push({ role: 'user', content: text });
 
         var containsDesignerMention =
@@ -981,22 +2794,55 @@
         var isAnalystTVWeekly = isTVWeeklyReportRequest(text);
         if (isAnalystTVWeekly) {
           lastAnalystReportType = 'tv_weekly';
-          var tvReply = buildTVWeeklyFirstResponse();
-          messages.push({ role: 'assistant', content: tvReply });
-          input.value = '';
-          updateState();
-          renderMessages();
-          if (!hasSentOnce) {
-            hasSentOnce = true;
-            if (greetingSection) {
-              greetingSection.classList.add('hidden');
-            }
-          }
-          input.focus();
-          return;
+          var res = buildTVWeeklyFirstResponse();
+          messages.push({
+            role: 'assistant',
+            contentIntro: res.contentIntro,
+            dataCardContent: res.dataCardContent,
+            contentTail: res.contentTail,
+            suggestionCards: res.suggestionCards,
+            chartData: res.chartData,
+            chartDataBar: res.chartDataBar
+          });
+        } else if (
+          lastAnalystReportType === 'tv_weekly' &&
+          text.indexOf('@海报图设计师') === -1 &&
+          text.indexOf('@海报图设计师（0001）') === -1
+        ) {
+          var cleanQ = text.replace(
+            /@数据洞察分析师（0004）\s*TV端数据\s*/g,
+            ''
+          ).trim() || text;
+          var followRes = buildTVWeeklyFollowUp(cleanQ);
+          messages.push({
+            role: 'assistant',
+            content: followRes.content,
+            suggestionCards: followRes.suggestionCards,
+            tableData: followRes.tableData,
+            chartLabel: followRes.chartLabel,
+            chartImageUrl: followRes.chartImageUrl
+          });
         }
 
-        if (designerFlowState === 'idle' && containsDesignerMention) {
+        if (containsHotspotMention || flow0005 !== 'idle') {
+          var hotspotReply = handleHotspotQuery0005(text);
+          var hotspotContent = typeof hotspotReply === 'object' && hotspotReply.text !== undefined ? hotspotReply.text : hotspotReply;
+          var hotspotPayload = { role: 'assistant', content: hotspotContent };
+          if (typeof hotspotReply === 'object') {
+            if (hotspotReply.hotspotCards) hotspotPayload.hotspotCards = hotspotReply.hotspotCards;
+            if (hotspotReply.batchActions) hotspotPayload.batchActions = hotspotReply.batchActions;
+            if (hotspotReply.refinementPrompt) hotspotPayload.refinementPrompt = hotspotReply.refinementPrompt;
+            if (hotspotReply.exportFeishuCsv) hotspotPayload.exportFeishuCsv = hotspotReply.exportFeishuCsv;
+            if (hotspotReply.scheduledTaskConfirm) hotspotPayload.scheduledTaskConfirm = hotspotReply.scheduledTaskConfirm;
+            if (hotspotReply.hotspotMenu) hotspotPayload.hotspotMenu = hotspotReply.hotspotMenu;
+            if (hotspotReply.actions) hotspotPayload.actions = hotspotReply.actions;
+            if (hotspotReply.copyParamsQuestion) hotspotPayload.copyParamsQuestion = hotspotReply.copyParamsQuestion;
+            if (hotspotReply.exportFollowUp) hotspotPayload.exportFollowUp = hotspotReply.exportFollowUp;
+            if (hotspotReply.copyType) hotspotPayload.copyType = hotspotReply.copyType;
+            if (hotspotReply.copyBlocks) hotspotPayload.copyBlocks = hotspotReply.copyBlocks;
+          }
+          messages.push(hotspotPayload);
+        } else if (designerFlowState === 'idle' && containsDesignerMention) {
           designerInitialQuestion = text;
           designerType = detectDesignerTypeFromText(text);
           designerLangCheckAsked = false;
@@ -1083,6 +2929,36 @@
 
       sendBtn.addEventListener('click', handleSend);
       input.addEventListener('keydown', function (e) {
+        if (mentionDropdown && mentionDropdown.classList.contains('is-open')) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            mentionSelectedIndex = (mentionSelectedIndex + 1) % mentionFilteredList.length;
+            updateMentionSelection();
+            return;
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            mentionSelectedIndex = (mentionSelectedIndex - 1 + mentionFilteredList.length) % mentionFilteredList.length;
+            updateMentionSelection();
+            return;
+          }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (mentionFilteredList.length > 0) {
+              var item = mentionFilteredList[mentionSelectedIndex];
+              if (item) {
+                insertMentionAt(item.mention);
+                closeMentionDropdown();
+              }
+            }
+            return;
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeMentionDropdown();
+            return;
+          }
+        }
         if (e.key === 'Enter') {
           // Enter：发送；Ctrl+Enter：换行
           if (e.ctrlKey || e.metaKey) {
@@ -1264,6 +3140,7 @@
             input.value = current + ' ' + mention + ' ';
           }
         }
+        if (typeof updateHotspotSugsVisibility === 'function') updateHotspotSugsVisibility();
       }
 
       function moveCursorToEnd() {
@@ -1405,6 +3282,51 @@
           updateState();
         });
       });
+
+      if (currentScheduledTasks.length === 0) {
+        currentScheduledTasks.push({
+          task_id: 'TASK20240522001',
+          task_name: '每1小时抓取TT Top10热点',
+          status: '运行中',
+          created_at: new Date().toLocaleString('zh-CN', { hour12: false }),
+          creator: '当前用户',
+          schedule: { type: 'interval_hours', hours: 1 },
+          channel: 'TikTok',
+          scope: { top_n: 10, regions: ['全球'] },
+          push_targets: ['工作台', '飞书'],
+          next_run_time: new Date(Date.now() + 3600000).toLocaleString('zh-CN', { hour12: false }),
+          run_count: 3,
+          last_result: '成功',
+          execution_records: [
+            { time: new Date(Date.now() - 7200000).toLocaleString('zh-CN', { hour12: false }), count: 10, result: '成功' },
+            { time: new Date(Date.now() - 3600000).toLocaleString('zh-CN', { hour12: false }), count: 10, result: '成功' }
+          ],
+          feishu_webhook: 'https://open.feishu.cn/.../****'
+        });
+      }
+      renderCurrentTasksSidebar0005();
+
+      var taskModal = document.getElementById('taskDetailModal');
+      if (taskModal) {
+        var taskModalClose = document.getElementById('taskDetailModalClose');
+        var taskModalBackdrop = taskModal.querySelector('.task-detail-modal-backdrop');
+        function closeTaskDetailModal() {
+          taskModal.setAttribute('aria-hidden', 'true');
+          taskModal.classList.remove('is-open');
+        }
+        if (taskModalClose) taskModalClose.addEventListener('click', closeTaskDetailModal);
+        if (taskModalBackdrop) taskModalBackdrop.addEventListener('click', closeTaskDetailModal);
+        taskModal.querySelectorAll('.task-detail-tab').forEach(function (tabBtn) {
+          tabBtn.addEventListener('click', function () {
+            var tab = tabBtn.getAttribute('data-tab');
+            taskModal.querySelectorAll('.task-detail-tab').forEach(function (b) { b.classList.remove('is-active'); });
+            tabBtn.classList.add('is-active');
+            taskModal.querySelectorAll('.task-detail-pane').forEach(function (p) {
+              p.style.display = p.getAttribute('data-pane') === tab ? 'block' : 'none';
+            });
+          });
+        });
+      }
     });
   </script>
 </body>

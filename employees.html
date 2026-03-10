@@ -12,93 +12,171 @@
     <header class="employees-header">
       <a href="index.html" class="employees-back">← 返回工作台</a>
       <h1 class="employees-title">硅基员工</h1>
-      <p class="employees-desc">管理已入职、塑造中与许愿中的硅基同事</p>
+      <p class="employees-desc">按出厂阶段查看硅基员工，并根据当前账号角色控制可见范围。</p>
+      <div class="employees-viewer" id="employeesViewer"></div>
       <div class="employees-header-links">
         <a href="org-structure.html">查看碳硅协同组织架构 →</a>
       </div>
     </header>
 
-    <main class="employees-main">
+    <main class="employees-main" id="employeesMain">
       <section class="employees-section employees-section-left">
         <h2 class="employees-section-title">已入职硅基员工</h2>
         <p class="employees-section-desc">当前可协作的硅基同事，点击头像可查看介绍，在工作台可 @TA 协作。</p>
-        <ul class="employees-card-list">
-          <li class="employees-card">
-            <div class="employees-card-avatar role-designer"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">海报图设计师</span>
-              <span class="employees-card-id">ID: 0001</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-translator"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">专辑标题翻译官</span>
-              <span class="employees-card-id">ID: 0002</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-ops"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">海外运营文案官</span>
-              <span class="employees-card-id">ID: 0003</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-analyst"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">数据洞察分析师</span>
-              <span class="employees-card-id">ID: 0004</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-hotspot"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">热点抓取师</span>
-              <span class="employees-card-id">ID: 0005</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-checker"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">线上检查助手</span>
-              <span class="employees-card-id">ID: 0006</span>
-            </div>
-          </li>
-          <li class="employees-card">
-            <div class="employees-card-avatar role-config"></div>
-            <div class="employees-card-info">
-              <span class="employees-card-name">配置助手</span>
-              <span class="employees-card-id">ID: 0007</span>
-            </div>
-          </li>
-        </ul>
+        <ul class="employees-card-list" id="employeesHiredList"></ul>
       </section>
 
-      <div class="employees-right">
-      <section class="employees-section">
-        <h2 class="employees-section-title">正在塑造的硅基员工</h2>
-        <p class="employees-section-desc">正在训练与配置中的硅基同事，上线后将出现在工作台可协作列表。</p>
-        <div class="employees-empty">
-          <p>暂无正在塑造的员工</p>
-          <p class="employees-empty-hint">新角色上线后会在此展示进度</p>
+      <section class="employees-section" id="employeesTrainingSection">
+        <h2 class="employees-section-title">正在训练中的硅基员工</h2>
+        <p class="employees-section-desc">该分组对管理员、管理者、训练者可见；使用者不可见。</p>
+        <ul class="employees-card-list" id="employeesTrainingList"></ul>
+        <div class="employees-empty" id="employeesTrainingEmpty">
+          <p>暂无正在训练中的员工</p>
+          <p class="employees-empty-hint">新角色进入训练阶段后会在此展示</p>
         </div>
       </section>
 
-      <section class="employees-section">
-        <h2 class="employees-section-title">许愿我希望增加的硅基员工</h2>
-        <p class="employees-section-desc">写下你希望新增的硅基员工角色或能力，我们会纳入规划。</p>
-        <div class="employees-wish">
-          <textarea
-            class="employees-wish-input"
-            placeholder="例如：周报撰写员、会议纪要整理师、竞品监测员…"
-            rows="4"
-          ></textarea>
-          <button type="button" class="employees-wish-btn">提交许愿</button>
+      <section class="employees-section" id="employeesFactorySection">
+        <h2 class="employees-section-title">还未出厂的硅基员工</h2>
+        <p class="employees-section-desc">仅管理员可见，用于查看已经规划、但尚未进入训练排期的硅基员工。</p>
+        <ul class="employees-card-list" id="employeesFactoryList"></ul>
+        <div class="employees-empty" id="employeesFactoryEmpty">
+          <p>暂无还未出厂的员工</p>
+          <p class="employees-empty-hint">管理员可在这里查看待规划的角色清单</p>
         </div>
       </section>
-      </div>
     </main>
   </div>
+
+  <script>
+    (function () {
+      var USER_STORAGE_KEY = 'workbench_current_user';
+      var ROLE_MAP = {
+        '1008611': 'admin',
+        '1008612': 'manager',
+        '1008615': 'manager',
+        '1008617': 'trainer',
+        '1008616': 'trainer',
+        '1008613': 'user',
+        '1008614': 'user'
+      };
+
+      var EMPLOYEE_GROUPS = {
+        hired: [
+          { name: '海报图设计师', id: '0001', avatarClass: 'role-designer' },
+          { name: '专辑标题翻译官', id: '0002', avatarClass: 'role-translator' },
+          { name: '海外运营文案官', id: '0003', avatarClass: 'role-ops' },
+          { name: '数据洞察分析师', id: '0004', avatarClass: 'role-analyst' },
+          { name: '热点抓取师', id: '0005', avatarClass: 'role-hotspot' },
+          { name: '线上检查助手', id: '0006', avatarClass: 'role-checker' },
+          { name: '配置助手', id: '0007', avatarClass: 'role-config' }
+        ],
+        training: [
+          { name: '短剧投放优化师', id: 'TR001', avatarClass: 'role-ops' },
+          { name: '多语审核助手', id: 'TR002', avatarClass: 'role-translator' }
+        ],
+        factory: [
+          { name: '周报撰写员', id: 'PL001', avatarClass: 'role-analyst' },
+          { name: '会议纪要整理师', id: 'PL002', avatarClass: 'role-designer' },
+          { name: '爬虫助手', id: 'PL003', avatarClass: 'role-hotspot', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' },
+          { name: '剧本评估员', id: 'PL004', avatarClass: 'role-analyst', desc: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。' }
+        ]
+      };
+
+      function getCurrentUser() {
+        try {
+          var raw = localStorage.getItem(USER_STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.id) return parsed;
+          }
+        } catch (e) {}
+        return { id: '1008611', name: '小小小筒' };
+      }
+
+      function getUserRole(userId) {
+        return ROLE_MAP[String(userId)] || 'user';
+      }
+
+      function roleLabel(role) {
+        return {
+          admin: '管理员',
+          manager: '管理者',
+          trainer: '训练者',
+          user: '使用者'
+        }[role] || '使用者';
+      }
+
+      function renderCardList(listEl, emptyEl, employees) {
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        if (!employees.length) {
+          if (emptyEl) emptyEl.style.display = '';
+          return;
+        }
+        if (emptyEl) emptyEl.style.display = 'none';
+        employees.forEach(function (employee) {
+          var li = document.createElement('li');
+          li.className = 'employees-card';
+          li.innerHTML =
+            '<div class="employees-card-avatar ' + employee.avatarClass + '"></div>' +
+            '<div class="employees-card-info">' +
+            '<span class="employees-card-name">' + employee.name + '</span>' +
+            '<span class="employees-card-id">ID: ' + employee.id + '</span>' +
+            (employee.desc ? '<span class="employees-card-desc">' + employee.desc + '</span>' : '') +
+            '</div>';
+          listEl.appendChild(li);
+        });
+      }
+
+      function updateMainColumns() {
+        var main = document.getElementById('employeesMain');
+        if (!main) return;
+        var visibleCount = 0;
+        main.querySelectorAll(':scope > .employees-section').forEach(function (section) {
+          if (section.style.display !== 'none') visibleCount += 1;
+        });
+        main.setAttribute('data-columns', String(Math.max(1, visibleCount)));
+      }
+
+      var currentUser = getCurrentUser();
+      var currentRole = getUserRole(currentUser.id);
+
+      var viewer = document.getElementById('employeesViewer');
+      if (viewer) {
+        viewer.textContent = '当前查看身份：' + (currentUser.name || '小小小筒') + '（' + roleLabel(currentRole) + '）';
+      }
+
+      renderCardList(
+        document.getElementById('employeesHiredList'),
+        null,
+        EMPLOYEE_GROUPS.hired
+      );
+
+      var trainingSection = document.getElementById('employeesTrainingSection');
+      if (currentRole === 'user') {
+        if (trainingSection) trainingSection.style.display = 'none';
+      } else {
+        renderCardList(
+          document.getElementById('employeesTrainingList'),
+          document.getElementById('employeesTrainingEmpty'),
+          EMPLOYEE_GROUPS.training
+        );
+      }
+
+      var factorySection = document.getElementById('employeesFactorySection');
+      if (currentRole !== 'admin') {
+        if (factorySection) factorySection.style.display = 'none';
+      } else {
+        renderCardList(
+          document.getElementById('employeesFactoryList'),
+          document.getElementById('employeesFactoryEmpty'),
+          EMPLOYEE_GROUPS.factory
+        );
+      }
+
+      updateMainColumns();
+    })();
+  </script>
 </body>
 </html>

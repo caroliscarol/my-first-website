@@ -41,6 +41,18 @@
   color: var(--color-text-sub);
 }
 
+.employees-viewer {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .employees-header-links {
   margin-top: 8px;
 }
@@ -58,19 +70,21 @@
 
 .employees-main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
 }
 
-.employees-section-left {
-  /* 左侧：已入职 */
+.employees-main[data-columns="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.employees-right {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.employees-main[data-columns="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.employees-section-left {
+  /* 左侧：已入职 */
 }
 
 .employees-section {
@@ -175,6 +189,14 @@
   color: var(--color-text-sub);
 }
 
+.employees-card-desc {
+  margin-top: 4px;
+  max-width: 320px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-sub);
+}
+
 .employees-empty {
   padding: 24px 16px;
   text-align: center;
@@ -239,6 +261,27 @@
 .employees-wish-btn:hover {
   background-color: #1e9b62;
   box-shadow: 0 2px 8px rgba(34, 181, 115, 0.35);
+}
+
+@media (max-width: 1200px) {
+  .employees-main {
+    grid-template-columns: 1fr;
+  }
+
+  .employees-main[data-columns="2"],
+  .employees-main[data-columns="3"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .employees-container {
+    padding: 24px 20px 36px;
+  }
+
+  .employees-main {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 碳硅协同组织架构页面 */
