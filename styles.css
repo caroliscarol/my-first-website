@@ -227,6 +227,94 @@ body {
   font-weight: 600;
 }
 
+.silicon-avatar.avatar-0001,
+.employees-card-avatar.avatar-0001,
+.train-card-avatar.avatar-0001,
+.employee-modal-avatar.avatar-0001 {
+  /* 海报图设计师 -> 设计师马头像 */
+  background-image: url("images/avatar-horse-designer.png");
+}
+
+.silicon-avatar.avatar-0002,
+.employees-card-avatar.avatar-0002,
+.train-card-avatar.avatar-0002,
+.employee-modal-avatar.avatar-0002 {
+  /* 专辑标题翻译官 -> 翻译马头像 */
+  background-image: url("images/avatar-horse-translator.png");
+}
+
+.silicon-avatar.avatar-0003,
+.employees-card-avatar.avatar-0003,
+.train-card-avatar.avatar-0003,
+.employee-modal-avatar.avatar-0003 {
+  /* 海外运营文案官 -> 运营马头像 */
+  background-image: url("images/avatar-horse-ops.png");
+}
+
+.silicon-avatar.avatar-0004,
+.employees-card-avatar.avatar-0004,
+.train-card-avatar.avatar-0004,
+.employee-modal-avatar.avatar-0004 {
+  /* 数据洞察分析师 -> 分析师马头像 */
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.silicon-avatar.avatar-0005,
+.employees-card-avatar.avatar-0005,
+.train-card-avatar.avatar-0005,
+.employee-modal-avatar.avatar-0005 {
+  /* 热点抓取师 -> 热点马头像 */
+  background-image: url("images/avatar-horse-hotspot.png");
+}
+
+.silicon-avatar.avatar-0006,
+.employees-card-avatar.avatar-0006,
+.train-card-avatar.avatar-0006,
+.employee-modal-avatar.avatar-0006 {
+  /* 线上检查助手 -> 复用分析师马头像 */
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.silicon-avatar.avatar-0007,
+.employees-card-avatar.avatar-0007,
+.train-card-avatar.avatar-0007,
+.employee-modal-avatar.avatar-0007 {
+  /* 配置助手 -> 复用设计师马头像 */
+  background-image: url("images/avatar-horse-designer.png");
+}
+
+.silicon-avatar.avatar-pl004,
+.employees-card-avatar.avatar-pl004,
+.train-card-avatar.avatar-pl004,
+.employee-modal-avatar.avatar-pl004 {
+  /* 剧本评估员 -> 分析师马头像 */
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.silicon-avatar.avatar-pl001,
+.employees-card-avatar.avatar-pl001,
+.train-card-avatar.avatar-pl001,
+.employee-modal-avatar.avatar-pl001 {
+  /* 周报撰写员 -> 分析师马头像 */
+  background-image: url("images/avatar-horse-analyst.png");
+}
+
+.silicon-avatar.avatar-pl002,
+.employees-card-avatar.avatar-pl002,
+.train-card-avatar.avatar-pl002,
+.employee-modal-avatar.avatar-pl002 {
+  /* 会议纪要整理师 -> 设计师马头像 */
+  background-image: url("images/avatar-horse-designer.png");
+}
+
+.silicon-avatar.avatar-pl003,
+.employees-card-avatar.avatar-pl003,
+.train-card-avatar.avatar-pl003,
+.employee-modal-avatar.avatar-pl003 {
+  /* 爬虫助手 -> 热点马头像 */
+  background-image: url("images/avatar-horse-hotspot.png");
+}
+
 .silicon-info {
   flex: 1;
   margin-left: 8px;

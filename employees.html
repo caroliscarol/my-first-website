@@ -14,23 +14,23 @@
       <div class="employees-title-row">
         <h1 class="employees-title">硅基员工</h1>
         <div class="employees-viewer" id="employeesViewer"></div>
+        <div class="employees-header-links">
+          <a href="org-structure.html">查看碳硅协同组织架构 →</a>
+        </div>
       </div>
-      <p class="employees-desc">按出厂阶段查看硅基员工，并根据当前账号角色控制可见范围。</p>
-      <div class="employees-header-links">
-        <a href="org-structure.html">查看碳硅协同组织架构 →</a>
-      </div>
+      <p class="employees-desc">全体用户都可查看 3 类硅基员工，具体可操作能力会根据当前账号身份变化。</p>
     </header>
 
     <main class="employees-main" id="employeesMain">
       <section class="employees-section employees-section-left">
         <h2 class="employees-section-title">已入职硅基员工</h2>
-        <p class="employees-section-desc">当前可协作的硅基同事，点击头像可查看介绍，在工作台可 @TA 协作。</p>
+        <p class="employees-section-desc">全体用户可见，点击头像可查看介绍；已入职员工可在工作台中 @TA 协作。</p>
         <ul class="employees-card-list" id="employeesHiredList"></ul>
       </section>
 
       <section class="employees-section" id="employeesTrainingSection">
         <h2 class="employees-section-title">正在训练中的硅基员工</h2>
-        <p class="employees-section-desc">该分组对管理员、管理者、训练者可见；使用者不可见。</p>
+        <p class="employees-section-desc">全体用户可见，点击头像可查看介绍；当前身份为训练者时，可继续使用养马功能。</p>
         <ul class="employees-card-list" id="employeesTrainingList"></ul>
         <div class="employees-empty" id="employeesTrainingEmpty">
           <p>暂无正在训练中的员工</p>
@@ -40,7 +40,7 @@
 
       <section class="employees-section" id="employeesFactorySection">
         <h2 class="employees-section-title">还未出厂的硅基员工</h2>
-        <p class="employees-section-desc">仅管理员可见，用于查看已经规划、但尚未进入训练排期的硅基员工。</p>
+        <p class="employees-section-desc">全体用户可见，点击头像可查看介绍，用于查看已经规划、但尚未进入训练排期的硅基员工。</p>
         <ul class="employees-card-list" id="employeesFactoryList"></ul>
         <div class="employees-empty" id="employeesFactoryEmpty">
           <p>暂无还未出厂的员工</p>
@@ -48,6 +48,27 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="employee-modal-overlay" id="employeeModal" aria-hidden="true">
+    <div class="employee-modal" role="dialog" aria-modal="true" aria-labelledby="employeeModalTitle">
+      <button class="employee-modal-close" type="button" aria-label="关闭">×</button>
+      <div class="employee-modal-avatar silicon-avatar" id="employeeModalAvatar"></div>
+      <h2 class="employee-modal-title" id="employeeModalTitle"></h2>
+      <p class="employee-modal-id" id="employeeModalId"></p>
+      <p class="employees-modal-tip" id="employeeModalPermission"></p>
+      <div class="employee-modal-section">
+        <h3 class="employee-modal-subtitle">工作范围</h3>
+        <p class="employee-modal-text" id="employeeModalScope"></p>
+      </div>
+      <div class="employee-modal-section">
+        <h3 class="employee-modal-subtitle">主要技能</h3>
+        <p class="employee-modal-text" id="employeeModalSkills"></p>
+      </div>
+      <div class="employee-modal-actions">
+        <a href="#" class="employee-modal-btn employee-modal-btn-train" id="employeeModalTrainBtn">养马</a>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -65,24 +86,97 @@
 
       var EMPLOYEE_GROUPS = {
         hired: [
-          { name: '海报图设计师', id: '0001', avatarClass: 'role-designer' },
-          { name: '专辑标题翻译官', id: '0002', avatarClass: 'role-translator' },
-          { name: '海外运营文案官', id: '0003', avatarClass: 'role-ops' },
-          { name: '数据洞察分析师', id: '0004', avatarClass: 'role-analyst' },
-          { name: '热点抓取师', id: '0005', avatarClass: 'role-hotspot' },
-          { name: '线上检查助手', id: '0006', avatarClass: 'role-checker' },
-          { name: '配置助手', id: '0007', avatarClass: 'role-config' }
+          { name: '海报图设计师', id: '0001', avatarClass: 'avatar-0001' },
+          { name: '数据洞察分析师', id: '0004', avatarClass: 'avatar-0004' },
+          { name: '热点抓取师', id: '0005', avatarClass: 'avatar-0005' },
+          { name: '线上检查助手', id: '0006', avatarClass: 'avatar-0006' },
+          { name: '配置助手', id: '0007', avatarClass: 'avatar-0007' }
         ],
         training: [
-          { name: '短剧投放优化师', id: 'TR001', avatarClass: 'role-ops' },
-          { name: '多语审核助手', id: 'TR002', avatarClass: 'role-translator' },
-          { name: '剧本评估员', id: 'PL004', avatarClass: 'role-analyst', desc: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。' }
+          { name: '海外运营文案官', id: '0003', avatarClass: 'avatar-0003' },
+          { name: '专辑标题翻译官', id: '0002', avatarClass: 'avatar-0002' },
+          { name: '剧本评估员', id: 'PL004', avatarClass: 'avatar-pl004', desc: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。' }
         ],
         factory: [
-          { name: '周报撰写员', id: 'PL001', avatarClass: 'role-analyst' },
-          { name: '会议纪要整理师', id: 'PL002', avatarClass: 'role-designer' },
-          { name: '爬虫助手', id: 'PL003', avatarClass: 'role-hotspot', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' }
+          { name: '周报撰写员', id: 'PL001', avatarClass: 'avatar-pl001' },
+          { name: '会议纪要整理师', id: 'PL002', avatarClass: 'avatar-pl002' },
+          { name: '爬虫助手', id: 'PL003', avatarClass: 'avatar-pl003', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' }
         ]
+      };
+
+      var EMPLOYEE_INTROS = {
+        '0001': {
+          name: '海报图设计师',
+          avatarClass: 'avatar-0001',
+          scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。',
+          skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控；与文案、运营协作落地需求。'
+        },
+        '0002': {
+          name: '专辑标题翻译官',
+          avatarClass: 'avatar-0002',
+          scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。',
+          skills: '中英互译与多语种标题；音乐娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。'
+        },
+        '0003': {
+          name: '海外运营文案官',
+          avatarClass: 'avatar-0003',
+          scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。',
+          skills: '活动推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计、热点同学协作。'
+        },
+        '0004': {
+          name: '数据洞察分析师',
+          avatarClass: 'avatar-0004',
+          scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。',
+          skills: '指标波动归因；留存与转化漏斗分析；可视化结论沉淀；与产品、运营对齐口径。'
+        },
+        '0005': {
+          name: '热点抓取师',
+          avatarClass: 'avatar-0005',
+          scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。',
+          skills: '热点与趋势识别；爆款案例整理；多平台热点聚合；与运营文案、设计师协作产出。'
+        },
+        '0006': {
+          name: '线上检查助手',
+          avatarClass: 'avatar-0006',
+          scope: '负责线上活动与配置结果的巡检，帮助团队及时发现素材、文案、链接与展示异常。',
+          skills: '基础巡检清单维护；异常问题定位；上线前后核验；与配置、运营协同闭环。'
+        },
+        '0007': {
+          name: '配置助手',
+          avatarClass: 'avatar-0007',
+          scope: '负责将活动位、推荐位与频道位等配置信息准确落到系统中，保障页面正确展示。',
+          skills: '活动位与频道位配置；多端入口校验；上线排期跟进；与设计、运营联合验收。'
+        },
+        'TR002': {
+          name: '多语审核助手',
+          avatarClass: 'avatar-0002',
+          scope: '负责对多语种文案与素材进行规范性审核，帮助团队在上线前发现翻译、语气与文化适配问题。',
+          skills: '多语文本校对；审核规则维护；敏感表达识别；与翻译和运营协作修正。'
+        },
+        'PL004': {
+          name: '剧本评估员',
+          avatarClass: 'avatar-pl004',
+          scope: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性，为内容立项与投放判断提供支持。',
+          skills: '题材判断；节奏与人物分析；商业化潜力评估；内容方向建议输出。'
+        },
+        'PL001': {
+          name: '周报撰写员',
+          avatarClass: 'avatar-pl001',
+          scope: '负责整理业务数据与过程记录，输出结构清晰、可阅读的周报内容，为团队复盘提供材料。',
+          skills: '周报结构整理；数据与结论串联；重点问题提炼；复盘结论归纳。'
+        },
+        'PL002': {
+          name: '会议纪要整理师',
+          avatarClass: 'avatar-pl002',
+          scope: '负责将会议过程中的讨论与决策沉淀为结构化纪要，帮助跨角色团队快速对齐行动项。',
+          skills: '会议重点提炼；待办归档；责任人与时间线整理；信息结构化呈现。'
+        },
+        'PL003': {
+          name: '爬虫助手',
+          avatarClass: 'avatar-pl003',
+          scope: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供稳定的数据输入与观察视角。',
+          skills: '公开信息抓取；榜单与竞品监测；数据清洗整理；异常变化追踪。'
+        }
       };
 
       function getCurrentUser() {
@@ -109,7 +203,7 @@
         }[role] || '使用者';
       }
 
-      function renderCardList(listEl, emptyEl, employees) {
+      function renderCardList(listEl, emptyEl, employees, groupName) {
         if (!listEl) return;
         listEl.innerHTML = '';
         if (!employees.length) {
@@ -120,25 +214,18 @@
         employees.forEach(function (employee) {
           var li = document.createElement('li');
           li.className = 'employees-card';
+          var intro = EMPLOYEE_INTROS[employee.id] || {};
           li.innerHTML =
-            '<div class="employees-card-avatar ' + employee.avatarClass + '"></div>' +
+            '<button type="button" class="employees-card-avatar-btn" data-employee-id="' + employee.id + '" data-employee-group="' + groupName + '" aria-label="查看' + employee.name + '介绍">' +
+            '<span class="employees-card-avatar silicon-avatar ' + employee.avatarClass + '"></span>' +
+            '</button>' +
             '<div class="employees-card-info">' +
             '<span class="employees-card-name">' + employee.name + '</span>' +
             '<span class="employees-card-id">ID: ' + employee.id + '</span>' +
-            (employee.desc ? '<span class="employees-card-desc">' + employee.desc + '</span>' : '') +
+            '<span class="employees-card-desc">' + (employee.desc || intro.scope || '点击头像可查看该硅基员工介绍。') + '</span>' +
             '</div>';
           listEl.appendChild(li);
         });
-      }
-
-      function updateMainColumns() {
-        var main = document.getElementById('employeesMain');
-        if (!main) return;
-        var visibleCount = 0;
-        main.querySelectorAll(':scope > .employees-section').forEach(function (section) {
-          if (section.style.display !== 'none') visibleCount += 1;
-        });
-        main.setAttribute('data-columns', String(Math.max(1, visibleCount)));
       }
 
       var currentUser = getCurrentUser();
@@ -152,32 +239,89 @@
       renderCardList(
         document.getElementById('employeesHiredList'),
         null,
-        EMPLOYEE_GROUPS.hired
+        EMPLOYEE_GROUPS.hired,
+        'hired'
       );
 
-      var trainingSection = document.getElementById('employeesTrainingSection');
-      if (currentRole === 'user') {
-        if (trainingSection) trainingSection.style.display = 'none';
-      } else {
-        renderCardList(
-          document.getElementById('employeesTrainingList'),
-          document.getElementById('employeesTrainingEmpty'),
-          EMPLOYEE_GROUPS.training
-        );
+      renderCardList(
+        document.getElementById('employeesTrainingList'),
+        document.getElementById('employeesTrainingEmpty'),
+        EMPLOYEE_GROUPS.training,
+        'training'
+      );
+
+      renderCardList(
+        document.getElementById('employeesFactoryList'),
+        document.getElementById('employeesFactoryEmpty'),
+        EMPLOYEE_GROUPS.factory,
+        'factory'
+      );
+
+      var modal = document.getElementById('employeeModal');
+      var modalTitle = document.getElementById('employeeModalTitle');
+      var modalId = document.getElementById('employeeModalId');
+      var modalAvatar = document.getElementById('employeeModalAvatar');
+      var modalScope = document.getElementById('employeeModalScope');
+      var modalSkills = document.getElementById('employeeModalSkills');
+      var modalPermission = document.getElementById('employeeModalPermission');
+      var modalClose = modal ? modal.querySelector('.employee-modal-close') : null;
+      var modalTrainBtn = document.getElementById('employeeModalTrainBtn');
+
+      function getPermissionText(groupName) {
+        if (groupName === 'training' && currentRole === 'trainer') {
+          return '当前身份可执行：查看介绍、养马';
+        }
+        return '当前身份可执行：查看介绍';
       }
 
-      var factorySection = document.getElementById('employeesFactorySection');
-      if (currentRole !== 'admin') {
-        if (factorySection) factorySection.style.display = 'none';
-      } else {
-        renderCardList(
-          document.getElementById('employeesFactoryList'),
-          document.getElementById('employeesFactoryEmpty'),
-          EMPLOYEE_GROUPS.factory
-        );
+      function openEmployeeModal(employeeId, groupName) {
+        var intro = EMPLOYEE_INTROS[employeeId];
+        if (!intro || !modal) return;
+        modalAvatar.className = 'employee-modal-avatar silicon-avatar ' + intro.avatarClass;
+        modalTitle.textContent = intro.name;
+        modalId.textContent = 'ID: ' + employeeId;
+        modalScope.textContent = intro.scope;
+        modalSkills.textContent = intro.skills;
+        if (modalPermission) {
+          modalPermission.textContent = getPermissionText(groupName);
+        }
+        if (modalTrainBtn) {
+          if (groupName === 'training' && currentRole === 'trainer') {
+            modalTrainBtn.style.display = '';
+            modalTrainBtn.href = 'employee-train.html?id=' + encodeURIComponent(employeeId);
+          } else {
+            modalTrainBtn.style.display = 'none';
+          }
+        }
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
       }
 
-      updateMainColumns();
+      function closeEmployeeModal() {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      document.querySelectorAll('.employees-card-avatar-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+          openEmployeeModal(button.getAttribute('data-employee-id'), button.getAttribute('data-employee-group'));
+        });
+      });
+
+      if (modalClose) {
+        modalClose.addEventListener('click', closeEmployeeModal);
+      }
+      if (modal) {
+        modal.addEventListener('click', function (event) {
+          if (event.target === modal) closeEmployeeModal();
+        });
+      }
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal && modal.getAttribute('aria-hidden') === 'false') {
+          closeEmployeeModal();
+        }
+      });
     })();
   </script>
 </body>

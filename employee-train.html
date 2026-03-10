@@ -10,6 +10,7 @@
     .train-page { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
     .train-back { display: inline-block; margin-bottom: 20px; font-size: 14px; color: var(--color-primary); text-decoration: none; }
     .train-back:hover { text-decoration: underline; }
+    .train-viewer { display: inline-flex; align-items: center; margin-bottom: 16px; padding: 6px 12px; border-radius: 999px; background: var(--color-primary-light); color: var(--color-primary); font-size: 13px; font-weight: 500; }
     .train-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 24px; margin-bottom: 24px; }
     .train-card-avatar { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; flex-shrink: 0; background-size: cover; background-position: center; }
     .train-card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--color-text-main); text-align: center; }
@@ -28,10 +29,12 @@
 </head>
 <body class="employees-page">
   <div class="train-page">
-    <a href="index.html" class="train-back">← 返回工作台</a>
+    <a href="employees.html" class="train-back">← 返回硅基员工</a>
+
+    <div class="train-viewer" id="trainViewer"></div>
 
     <div class="train-no-permission" id="trainNoPermission" style="display: none;">
-      <p class="train-card-text">您没有该硅基员工的养马权限。</p>
+      <p class="train-card-text" id="trainPermissionText"></p>
     </div>
 
     <div class="train-card" id="trainCard">
@@ -57,61 +60,117 @@
 
   <script>
     (function () {
-      // 养马权限（与工作台一致）：用户 ID -> 可培养的员工 ID 列表
-      var TRAIN_PERMISSION = {
-        '1008611': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'],
-        '1008615': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'],
-        '1008617': ['0001'],
-        '1008616': ['0005']
+      var USER_STORAGE_KEY = 'workbench_current_user';
+      var ROLE_MAP = {
+        '1008611': 'admin',
+        '1008612': 'manager',
+        '1008615': 'manager',
+        '1008617': 'trainer',
+        '1008616': 'trainer',
+        '1008613': 'user',
+        '1008614': 'user'
       };
-      function hasTrainPermission(userId, employeeId) {
-        if (!userId) return false;
-        var list = TRAIN_PERMISSION[String(userId)];
-        return list && list.indexOf(String(employeeId)) !== -1;
+
+      var TRAINING_EMPLOYEE_IDS = ['0002', '0003', 'PL004'];
+
+      function getCurrentUser() {
+        try {
+          var raw = localStorage.getItem(USER_STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.id) return parsed;
+          }
+        } catch (e) {}
+        return { id: '1008611', name: '小小小筒' };
+      }
+
+      function getUserRole(userId) {
+        return ROLE_MAP[String(userId)] || 'user';
+      }
+
+      function roleLabel(role) {
+        return {
+          admin: '管理员',
+          manager: '管理者',
+          trainer: '训练者',
+          user: '使用者'
+        }[role] || '使用者';
       }
 
       var params = (function () {
         var id = '';
-        var user = '';
         var search = window.location.search;
         var idM = /[?&]id=([^&]+)/.exec(search);
-        var userM = /[?&]user=([^&]+)/.exec(search);
         if (idM) id = decodeURIComponent(idM[1]);
-        if (userM) user = decodeURIComponent(userM[1]);
-        return { id: id || '0001', user: user };
+        return { id: id || 'TR002' };
       })();
 
       var EMPLOYEE_INTROS = {
-        '0001': { name: '海报图设计师', avatarClass: 'role-designer', scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。', skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。' },
-        '0002': { name: '专辑标题翻译官', avatarClass: 'role-translator', scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。', skills: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。' },
-        '0003': { name: '海外运营文案官', avatarClass: 'role-ops', scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。', skills: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。' },
-        '0004': { name: '数据洞察分析师', avatarClass: 'role-analyst', scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。', skills: '核心指标解读与归因；数据结论与建议输出；与运营、产品协作；报表与看板搭建。' },
-        '0005': { name: '热点抓取师', avatarClass: 'role-hotspot', scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。', skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。' }
+        '0001': { name: '海报图设计师', avatarClass: 'avatar-0001', scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。', skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。' },
+        '0002': { name: '专辑标题翻译官', avatarClass: 'avatar-0002', scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。', skills: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。' },
+        '0003': { name: '海外运营文案官', avatarClass: 'avatar-0003', scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。', skills: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。' },
+        '0004': { name: '数据洞察分析师', avatarClass: 'avatar-0004', scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。', skills: '核心指标解读与归因；数据结论与建议输出；与运营、产品协作；报表与看板搭建。' },
+        '0005': { name: '热点抓取师', avatarClass: 'avatar-0005', scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。', skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。' },
+        '0006': { name: '线上检查助手', avatarClass: 'avatar-0006', scope: '负责线上活动与配置结果的巡检，帮助团队及时发现素材、文案、链接与展示异常。', skills: '基础巡检清单维护；异常问题定位；上线前后核验；与配置、运营协同闭环。' },
+        '0007': { name: '配置助手', avatarClass: 'avatar-0007', scope: '负责将活动位、推荐位与频道位等配置信息准确落到系统中，保障页面正确展示。', skills: '活动位与频道位配置；多端入口校验；上线排期跟进；与设计、运营联合验收。' },
+        'TR002': { name: '多语审核助手', avatarClass: 'avatar-0002', scope: '负责对多语种文案与素材进行规范性审核，帮助团队在上线前发现翻译、语气与文化适配问题。', skills: '多语文本校对；审核规则维护；敏感表达识别；与翻译和运营协作修正。' },
+        'PL004': { name: '剧本评估员', avatarClass: 'avatar-pl004', scope: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性，为内容立项与投放判断提供支持。', skills: '题材判断；节奏与人物分析；商业化潜力评估；内容方向建议输出。' },
+        'PL001': { name: '周报撰写员', avatarClass: 'avatar-pl001', scope: '负责整理业务数据与过程记录，输出结构清晰、可阅读的周报内容，为团队复盘提供材料。', skills: '周报结构整理；数据与结论串联；重点问题提炼；复盘结论归纳。' },
+        'PL002': { name: '会议纪要整理师', avatarClass: 'avatar-pl002', scope: '负责将会议过程中的讨论与决策沉淀为结构化纪要，帮助跨角色团队快速对齐行动项。', skills: '会议重点提炼；待办归档；责任人与时间线整理；信息结构化呈现。' },
+        'PL003': { name: '爬虫助手', avatarClass: 'avatar-pl003', scope: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供稳定的数据输入与观察视角。', skills: '公开信息抓取；榜单与竞品监测；数据清洗整理；异常变化追踪。' }
       };
 
       var id = params.id;
-      var hasPermission = hasTrainPermission(params.user, id);
+      var currentUser = getCurrentUser();
+      var currentRole = getUserRole(currentUser.id);
+      var isTrainingEmployee = TRAINING_EMPLOYEE_IDS.indexOf(id) !== -1;
+      var canTrain = currentRole === 'trainer' && isTrainingEmployee;
+      var viewer = document.getElementById('trainViewer');
       var noPermEl = document.getElementById('trainNoPermission');
+      var permissionText = document.getElementById('trainPermissionText');
       var trainCard = document.getElementById('trainCard');
       var skillSection = document.getElementById('trainSkillSection');
+      var addSkillBtn = document.getElementById('addSkillBtn');
 
-      if (!hasPermission) {
-        if (noPermEl) noPermEl.style.display = 'block';
-        if (trainCard) trainCard.style.display = 'none';
-        if (skillSection) skillSection.style.display = 'none';
-      } else {
-        var intro = EMPLOYEE_INTROS[id];
-        if (!intro) {
+      if (viewer) {
+        viewer.textContent = '当前查看身份：' + (currentUser.name || '小小小筒') + '（' + roleLabel(currentRole) + '）';
+      }
+
+      var intro = EMPLOYEE_INTROS[id];
+      if (!intro) {
+        if (trainCard) {
           trainCard.innerHTML = '<p style="text-align:center;color:var(--color-text-sub);">未找到该员工信息</p>';
-        } else {
-          document.getElementById('trainAvatar').className = 'train-card-avatar silicon-avatar ' + intro.avatarClass;
-          document.getElementById('trainTitle').textContent = intro.name;
-          document.getElementById('trainId').textContent = 'ID: ' + id;
-          document.getElementById('trainScope').textContent = intro.scope;
-          document.getElementById('trainSkills').textContent = intro.skills;
         }
-        document.getElementById('addSkillBtn').addEventListener('click', function (e) {
+        if (noPermEl) noPermEl.style.display = 'none';
+        if (skillSection) skillSection.style.display = 'none';
+        return;
+      }
+
+      document.getElementById('trainAvatar').className = 'train-card-avatar silicon-avatar ' + intro.avatarClass;
+      document.getElementById('trainTitle').textContent = intro.name;
+      document.getElementById('trainId').textContent = 'ID: ' + id;
+      document.getElementById('trainScope').textContent = intro.scope;
+      document.getElementById('trainSkills').textContent = intro.skills;
+
+      if (canTrain) {
+        if (noPermEl) noPermEl.style.display = 'none';
+        if (skillSection) skillSection.style.display = '';
+      } else {
+        if (noPermEl) noPermEl.style.display = 'block';
+        if (skillSection) skillSection.style.display = 'none';
+        if (permissionText) {
+          if (!isTrainingEmployee) {
+            permissionText.textContent = '该硅基员工当前不在训练阶段，暂不提供养马功能。';
+          } else {
+            permissionText.textContent = '当前身份仅可查看介绍，训练者可在此使用养马功能。';
+          }
+        }
+      }
+
+      if (addSkillBtn) {
+        addSkillBtn.addEventListener('click', function (e) {
           e.preventDefault();
+          if (!canTrain) return;
           alert('添加技能功能即将开放，敬请期待。');
         });
       }
