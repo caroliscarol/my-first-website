@@ -3248,7 +3248,10 @@
         modalSkills.textContent = t['skills' + employeeId] || intro.skills;
         if (modalTrainBtn) {
           var currentUserId = getCurrentUserId();
-          var canTrain = hasTrainPermission(currentUserId, employeeId);
+          var userRole = getUserRole(currentUserId);
+          var canTrain =
+            (userRole === 'admin' || userRole === 'trainer') &&
+            (userRole === 'admin' || hasTrainPermission(currentUserId, employeeId));
           if (canTrain) {
             modalTrainBtn.style.display = '';
             modalTrainBtn.href = 'employee-train.html?id=' + encodeURIComponent(employeeId) + '&user=' + encodeURIComponent(currentUserId);

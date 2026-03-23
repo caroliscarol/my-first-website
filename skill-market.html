@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>技能市场 - 海外智能工作台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .skill-market-page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 20px 36px;
+    }
+    .skill-back {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: var(--color-primary);
+      font-size: 14px;
+      text-decoration: none;
+    }
+    .skill-back:hover { text-decoration: underline; }
+    .skill-header {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .skill-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: var(--color-text-main);
+    }
+    .skill-desc {
+      margin: 0;
+      font-size: 13px;
+      color: var(--color-text-sub);
+    }
+    .skill-toolbar {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .skill-filter-list {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .skill-filter-chip {
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #fff;
+      font-size: 12px;
+      color: var(--color-text-sub);
+    }
+    .skill-filter-chip.active {
+      border-color: #b5e9cc;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+    }
+    .skill-create-btn {
+      border: none;
+      border-radius: 10px;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .skill-create-btn:hover { background: #1e9b62; }
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .skill-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-light);
+    }
+    .skill-tag {
+      align-self: flex-start;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      font-size: 12px;
+    }
+    .skill-name {
+      margin: 0;
+      font-size: 16px;
+      color: var(--color-text-main);
+    }
+    .skill-text {
+      margin: 0;
+      font-size: 13px;
+      color: var(--color-text-sub);
+      line-height: 1.5;
+      min-height: 58px;
+    }
+    .skill-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .skill-price {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-main);
+    }
+    .skill-add-btn {
+      border: none;
+      border-radius: 8px;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 13px;
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+    .skill-add-btn:hover { background: #1e9b62; }
+
+    @media (max-width: 980px) {
+      .skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .skill-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="employees-page">
+  <main class="skill-market-page">
+    <a id="backToTrain" class="skill-back" href="employee-train.html">← 返回养马聊天页</a>
+    <header class="skill-header">
+      <h1 class="skill-title">技能市场</h1>
+      <p class="skill-desc">为当前硅基同事安装可复用技能模块，支持内容生成、分析、翻译、检查等场景。</p>
+    </header>
+
+    <section class="skill-toolbar">
+      <div class="skill-filter-list">
+        <span class="skill-filter-chip active">全部</span>
+        <span class="skill-filter-chip">设计创作</span>
+        <span class="skill-filter-chip">多语翻译</span>
+        <span class="skill-filter-chip">数据分析</span>
+        <span class="skill-filter-chip">质量检查</span>
+      </div>
+      <button id="createSkillBtn" class="skill-create-btn" type="button">+ 创建新技能</button>
+    </section>
+
+    <section class="skill-grid">
+      <article class="skill-card">
+        <span class="skill-tag">推荐</span>
+        <h2 class="skill-name">跨平台海报构图增强</h2>
+        <p class="skill-text">自动识别平台尺寸并重构构图，保持主视觉统一，减少手工改图成本。</p>
+        <div class="skill-actions">
+          <span class="skill-price">免费</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">效率</span>
+        <h2 class="skill-name">多语种本地化润色</h2>
+        <p class="skill-text">在翻译基础上补充母语化表达，统一品牌语气，支持英文、韩文、日文等。</p>
+        <div class="skill-actions">
+          <span class="skill-price">20 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">分析</span>
+        <h2 class="skill-name">活动投放复盘助手</h2>
+        <p class="skill-text">自动生成活动复盘框架，按曝光、点击、转化维度给出归因与优化建议。</p>
+        <div class="skill-actions">
+          <span class="skill-price">15 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">设计创作</span>
+        <h2 class="skill-name">古装场景光影增强</h2>
+        <p class="skill-text">为古装题材自动匹配光线层次与氛围色调，提升场景纵深和戏剧张力。</p>
+        <div class="skill-actions">
+          <span class="skill-price">12 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">设计创作</span>
+        <h2 class="skill-name">人物边缘精修器</h2>
+        <p class="skill-text">优化发丝、衣摆、道具边缘细节，减少抠图残边，适合品宣级出图流程。</p>
+        <div class="skill-actions">
+          <span class="skill-price">免费</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">效率</span>
+        <h2 class="skill-name">一键多版位裁切</h2>
+        <p class="skill-text">自动生成 16:9、1:1、9:16 等多平台版本，保持人物主体与关键信息稳定。</p>
+        <div class="skill-actions">
+          <span class="skill-price">18 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">多语翻译</span>
+        <h2 class="skill-name">剧名术语一致性检查</h2>
+        <p class="skill-text">统一多语海报中的剧名、角色名和术语翻译，避免多渠道发布口径不一致。</p>
+        <div class="skill-actions">
+          <span class="skill-price">10 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">质量检查</span>
+        <h2 class="skill-name">品牌 VI 合规巡检</h2>
+        <p class="skill-text">检查 LOGO、Slogan、版权文字与色值规范，自动标记潜在合规风险点。</p>
+        <div class="skill-actions">
+          <span class="skill-price">25 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">分析</span>
+        <h2 class="skill-name">海报 A/B 测试建议器</h2>
+        <p class="skill-text">根据投放目标输出多版视觉差异建议，支持封面点击率和停留时长优化。</p>
+        <div class="skill-actions">
+          <span class="skill-price">15 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+      <article class="skill-card">
+        <span class="skill-tag">运营</span>
+        <h2 class="skill-name">节日营销素材加速包</h2>
+        <p class="skill-text">结合地区节庆热点自动给出标题、主视觉氛围词和传播文案方向建议。</p>
+        <div class="skill-actions">
+          <span class="skill-price">8 点数</span>
+          <button class="skill-add-btn" type="button">立即添加</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var search = window.location.search;
+      var idM = /[?&]id=([^&]+)/.exec(search);
+      var userM = /[?&]user=([^&]+)/.exec(search);
+      var id = idM ? decodeURIComponent(idM[1]) : '';
+      var user = userM ? decodeURIComponent(userM[1]) : '';
+
+      var backLink = document.getElementById('backToTrain');
+      if (backLink && id) {
+        backLink.href = 'employee-train.html?id=' + encodeURIComponent(id) + '&user=' + encodeURIComponent(user);
+      }
+
+      var addBtns = document.querySelectorAll('.skill-add-btn');
+      for (var i = 0; i < addBtns.length; i += 1) {
+        addBtns[i].addEventListener('click', function () {
+          alert('技能已加入待安装清单。');
+        });
+      }
+
+      var createSkillBtn = document.getElementById('createSkillBtn');
+      if (createSkillBtn) {
+        createSkillBtn.addEventListener('click', function () {
+          alert('创建新技能入口已预留，后续可接入技能配置表单。');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

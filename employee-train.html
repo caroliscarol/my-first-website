@@ -7,60 +7,184 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="employees.css" />
   <style>
-    .train-page { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+    .train-page { max-width: 1320px; margin: 0 auto; padding: 24px 20px; }
     .train-back { display: inline-block; margin-bottom: 20px; font-size: 14px; color: var(--color-primary); text-decoration: none; }
     .train-back:hover { text-decoration: underline; }
-    .train-viewer { display: inline-flex; align-items: center; margin-bottom: 16px; padding: 6px 12px; border-radius: 999px; background: var(--color-primary-light); color: var(--color-primary); font-size: 13px; font-weight: 500; }
-    .train-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 24px; margin-bottom: 24px; }
-    .train-card-avatar { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; flex-shrink: 0; background-size: cover; background-position: center; }
-    .train-card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--color-text-main); text-align: center; }
-    .train-card-id { margin: 0 0 16px; font-size: 13px; color: var(--color-text-sub); text-align: center; }
-    .train-card-section { margin-bottom: 14px; }
-    .train-card-section:last-of-type { margin-bottom: 0; }
-    .train-card-subtitle { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--color-primary); }
-    .train-card-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-text-main); }
-    .train-skill-section { background: var(--color-primary-light); border: 1px dashed var(--color-primary); border-radius: var(--radius-card); padding: 20px; text-align: center; }
-    .train-skill-title { margin: 0 0 8px; font-size: 16px; font-weight: 600; color: var(--color-primary); }
-    .train-skill-desc { margin: 0 0 16px; font-size: 13px; color: var(--color-text-sub); }
-    .train-skill-btn { display: inline-block; padding: 10px 24px; font-size: 14px; font-weight: 600; color: #fff; background: var(--color-primary); border: none; border-radius: 10px; cursor: pointer; text-decoration: none; transition: background-color 0.15s ease; }
-    .train-skill-btn:hover { background-color: #1e9b62; }
-    .train-no-permission { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 24px; margin-bottom: 24px; color: var(--color-text-sub); text-align: center; }
+    .train-no-permission { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 24px; color: var(--color-text-sub); text-align: center; }
+
+    .train-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      align-items: stretch;
+      min-height: calc(100vh - 130px);
+    }
+
+    .train-sidebar {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .train-card,
+    .train-history,
+    .train-chat {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-light);
+    }
+
+    .train-card { padding: 20px; }
+    .train-card-top { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; }
+    .train-card-avatar { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; }
+    .train-card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--color-text-main); }
+    .train-card-id { margin: 0; font-size: 13px; color: var(--color-text-sub); }
+    .train-card-section { margin-bottom: 10px; }
+    .train-card-section:last-child { margin-bottom: 0; }
+    .train-card-subtitle { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--color-primary); }
+    .train-card-text { margin: 0; font-size: 13px; line-height: 1.55; color: var(--color-text-main); }
+
+    .train-history { display: flex; flex-direction: column; min-height: 0; }
+    .train-history-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px 10px; border-bottom: 1px solid var(--color-border);
+    }
+    .train-history-title { margin: 0; font-size: 14px; color: var(--color-text-main); }
+    .train-new-chat-btn {
+      border: none; border-radius: 8px; background: var(--color-primary-light);
+      color: var(--color-primary); font-size: 13px; font-weight: 600;
+      padding: 7px 10px; cursor: pointer;
+    }
+    .train-new-chat-btn:hover { background: #dff8eb; }
+    .train-history-list { list-style: none; margin: 0; padding: 8px; overflow-y: auto; display: grid; gap: 6px; }
+    .train-history-item {
+      border: 1px solid transparent; border-radius: 8px; background: transparent;
+      text-align: left; padding: 10px; cursor: pointer;
+    }
+    .train-history-item:hover { background: #fafafa; border-color: var(--color-border); }
+    .train-history-item.active { background: var(--color-primary-light); border-color: #b5e9cc; }
+    .train-history-item-title { margin: 0 0 4px; font-size: 13px; color: var(--color-text-main); font-weight: 600; }
+    .train-history-item-time { margin: 0; font-size: 12px; color: var(--color-text-sub); }
+
+    .train-chat {
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      min-height: 0;
+    }
+    .train-chat-head {
+      padding: 14px 18px; border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .train-chat-title { margin: 0; font-size: 16px; color: var(--color-text-main); }
+    .train-chat-status { margin: 0; font-size: 12px; color: var(--color-text-sub); }
+    .train-chat-log {
+      padding: 18px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #fcfffd 0%, #f7f9fa 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .train-msg { max-width: 78%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+    .train-msg.bot { align-self: flex-start; color: var(--color-text-main); background: #ffffff; border: 1px solid var(--color-border); }
+    .train-msg.user { align-self: flex-end; color: #fff; background: var(--color-primary); }
+    .train-chat-tools {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-top: 1px solid var(--color-border);
+      background: #fcfcfc;
+    }
+    .train-tool-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 11px; border: 1px solid var(--color-border); border-radius: 8px;
+      background: #fff; color: var(--color-text-main); font-size: 13px; text-decoration: none; cursor: pointer;
+    }
+    .train-tool-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .train-chat-input-wrap {
+      border-top: 1px solid var(--color-border);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 12px;
+    }
+    .train-chat-input {
+      width: 100%; box-sizing: border-box; border: 1px solid var(--color-border);
+      border-radius: 10px; padding: 10px 12px; font-size: 14px;
+      font-family: var(--font-main);
+    }
+    .train-chat-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(34, 181, 115, 0.15); }
+    .train-send-btn {
+      border: none; border-radius: 10px; background: var(--color-primary); color: #fff;
+      font-size: 14px; font-weight: 600; padding: 0 16px; cursor: pointer;
+    }
+    .train-send-btn:hover { background: #1e9b62; }
+
+    @media (max-width: 980px) {
+      .train-layout { grid-template-columns: 1fr; min-height: auto; }
+      .train-sidebar { grid-template-rows: auto auto; }
+      .train-history { min-height: 300px; }
+      .train-chat { min-height: 560px; }
+    }
   </style>
 </head>
 <body class="employees-page">
   <div class="train-page">
-    <a href="employees.html" class="train-back">← 返回硅基员工</a>
-
-    <div class="train-viewer" id="trainViewer"></div>
+    <a href="index.html" class="train-back">← 返回工作台</a>
 
     <div class="train-no-permission" id="trainNoPermission" style="display: none;">
-      <p class="train-card-text" id="trainPermissionText"></p>
+      <p class="train-card-text">您没有该硅基员工的养马权限。</p>
     </div>
 
-    <div class="train-card" id="trainCard">
-      <div class="train-card-avatar" id="trainAvatar"></div>
-      <h1 class="train-card-title" id="trainTitle"></h1>
-      <p class="train-card-id" id="trainId"></p>
-      <div class="train-card-section">
-        <h3 class="train-card-subtitle">工作范围</h3>
-        <p class="train-card-text" id="trainScope"></p>
-      </div>
-      <div class="train-card-section">
-        <h3 class="train-card-subtitle">主要技能</h3>
-        <p class="train-card-text" id="trainSkills"></p>
-      </div>
-    </div>
+    <div class="train-layout" id="trainLayout">
+      <aside class="train-sidebar">
+        <section class="train-card" id="trainCard">
+          <div class="train-card-top">
+            <div class="train-card-avatar" id="trainAvatar"></div>
+            <div>
+              <h1 class="train-card-title" id="trainTitle"></h1>
+              <p class="train-card-id" id="trainId"></p>
+            </div>
+          </div>
+          <div class="train-card-section">
+            <h3 class="train-card-subtitle">工作范围</h3>
+            <p class="train-card-text" id="trainScope"></p>
+          </div>
+          <div class="train-card-section">
+            <h3 class="train-card-subtitle">主要技能</h3>
+            <p class="train-card-text" id="trainSkills"></p>
+          </div>
+        </section>
 
-    <section class="train-skill-section" id="trainSkillSection">
-      <h2 class="train-skill-title">增加技能</h2>
-      <p class="train-skill-desc">为该硅基员工添加或升级技能，提升协作能力</p>
-      <a href="#" class="train-skill-btn" id="addSkillBtn">添加技能</a>
-    </section>
+        <section class="train-history" id="trainHistorySection">
+          <div class="train-history-head">
+            <h2 class="train-history-title">历史对话</h2>
+            <button type="button" class="train-new-chat-btn" id="newChatBtn">+ 新对话</button>
+          </div>
+          <ul class="train-history-list" id="historyList"></ul>
+        </section>
+      </aside>
+
+      <section class="train-chat" id="trainChatSection">
+        <div class="train-chat-head">
+          <h2 class="train-chat-title">养马聊天助手</h2>
+          <p class="train-chat-status">在线 · 可协作调教</p>
+        </div>
+        <div class="train-chat-log" id="chatLog"></div>
+        <div class="train-chat-tools">
+          <button type="button" class="train-tool-btn" id="uploadBtn">上传附件</button>
+          <a class="train-tool-btn" id="addSkillBtn" href="#">增加技能</a>
+        </div>
+        <div class="train-chat-input-wrap">
+          <input class="train-chat-input" id="chatInput" type="text" placeholder="请输入你的调教指令，例如：优化海外节日海报提示词..." />
+          <button type="button" class="train-send-btn" id="sendBtn">发送</button>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script>
     (function () {
-      var USER_STORAGE_KEY = 'workbench_current_user';
       var ROLE_MAP = {
         '1008611': 'admin',
         '1008612': 'manager',
@@ -70,109 +194,447 @@
         '1008613': 'user',
         '1008614': 'user'
       };
-
-      var TRAINING_EMPLOYEE_IDS = ['0002', '0003', 'PL004'];
-
-      function getCurrentUser() {
-        try {
-          var raw = localStorage.getItem(USER_STORAGE_KEY);
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            if (parsed && parsed.id) return parsed;
-          }
-        } catch (e) {}
-        return { id: '1008611', name: '小小小筒' };
-      }
-
       function getUserRole(userId) {
         return ROLE_MAP[String(userId)] || 'user';
       }
+      var TRAIN_PERMISSION = {
+        '1008611': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'],
+        '1008615': ['0001', '0002', '0003', '0004', '0005', '0006', '0007'],
+        '1008617': ['0001'],
+        '1008616': ['0005']
+      };
+      var EMPLOYEE_INTROS = {
+        '0001': { name: '海报图设计师', avatarClass: 'role-designer', scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。', skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。' },
+        '0002': { name: '专辑标题翻译官', avatarClass: 'role-translator', scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。', skills: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。' },
+        '0003': { name: '海外运营文案官', avatarClass: 'role-ops', scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。', skills: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。' },
+        '0004': { name: '数据洞察分析师', avatarClass: 'role-analyst', scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。', skills: '核心指标解读与归因；数据结论与建议输出；与运营、产品协作；报表与看板搭建。' },
+        '0005': { name: '热点抓取师', avatarClass: 'role-hotspot', scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。', skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。' },
+        '0006': { name: '线上检查助手', avatarClass: 'role-checker', scope: '负责上线前配置核验、页面巡检与发布清单对照，降低发布风险。', skills: '发布前核对；流程清单化；异常检测；与运营和技术同学协同。' },
+        '0007': { name: '配置助手', avatarClass: 'role-config', scope: '负责活动配置、参数维护与模板复用，保障多场景快速上线。', skills: '活动配置编排；模板沉淀；参数校验；上线效率优化。' },
+        TR001: { name: '短剧投放优化师', avatarClass: 'role-ops', scope: '负责短剧广告投放素材、定向与预算结构的优化建议，提升投放 ROI 与回收效率。', skills: '投放数据解读；素材 A/B 方向建议；人群与版位策略；与运营、创意协作迭代。' },
+        TR002: { name: '多语审核助手', avatarClass: 'role-translator', scope: '负责对多语言内容进行合规、术语与文化层面的审核，降低上线风险。', skills: '多语种敏感与合规检查；术语表对照；本地化表达建议；批量审核效率工具化。' },
+        PL001: { name: '周报撰写员', avatarClass: 'role-analyst', scope: '负责业务周报、数据周报等周期性报告的撰写与结构整理，输出清晰结论与下周关注点。', skills: '指标摘要与趋势描述；问题与机会归纳；多部门信息整合；可读性排版与口径统一。' },
+        PL002: { name: '会议纪要整理师', avatarClass: 'role-designer', scope: '负责会议录音与纪要的结构化整理，提炼决策项、待办与责任人，便于会后跟进。', skills: '议题归纳与行动项抽取；待办与截止时间标注；多人发言合并；与协作工具同步。' },
+        PL003: { name: '爬虫助手', avatarClass: 'role-hotspot', scope: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。', skills: '多源数据采集与清洗；榜单与话题监控；竞品动态汇总；与分析师、运营协作输出情报。' },
+        PL004: { name: '剧本评估员', avatarClass: 'role-analyst', scope: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性。', skills: '题材与市场契合度；叙事节奏与人物弧光；改编与排播风险；结论结构化输出。' }
+      };
+      var DESIGNER_HISTORY_SESSIONS = [
+        {
+          id: 'h1',
+          title: '双人海报图',
+          time: '今天 10:22',
+          messages: [
+            {
+              type: 'user',
+              content: '主题：做一张电视剧海报，画面两个人物并排站立、身高一致。高品质影视剧照，无边框，图片不加任何文字。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我会先锁定“双人并排、同等视觉权重”的主体关系，保持画面纯净，不添加任何文案元素。'
+            },
+            {
+              type: 'user',
+              content: '人物参考：从两张参考图提取主要角色，只参考外貌，忽略原图比例与构图。两人大小一致，样貌、服饰、表情、姿势要精准还原。'
+            },
+            {
+              type: 'bot',
+              content: '明白。我会按角色特征进行一比一还原，并统一人物尺度，避免一人偏大或透视失衡。'
+            },
+            {
+              type: 'user',
+              content: '背景参考：背景风格与原图和服饰匹配，简洁且模糊处理；无拼接痕迹、无分割线。需要开阔舒展、古装剧风格场景。'
+            },
+            {
+              type: 'bot',
+              content: '会采用连续景深背景，做自然模糊过渡，避免任何接缝或切割感，整体贴合古装氛围。'
+            },
+            {
+              type: 'user',
+              content: '风格：允许调色。广角镜头、氛围感强、电影级构图，提升画质，整体唯美动人，同时保持两位人物美感。'
+            },
+            {
+              type: 'bot',
+              content: '我会使用电影化冷暖平衡调色与广角构图，强化氛围层次，在提质同时保持人物五官和肤质自然。'
+            },
+            {
+              type: 'user',
+              content: '构图：广角拍摄，人物放在画面右侧（偏右构图），左侧留白或展示场景，突出横版效果。'
+            },
+            {
+              type: 'bot',
+              content: '了解，右侧双人主体 + 左侧场景留白的版式已确认，便于后续衍生渠道适配。'
+            },
+            {
+              type: 'user',
+              content: '格式与画幅：高品质影视剧照，无边框，16:9 横版，输出 1440×810 高清海报。'
+            },
+            {
+              type: 'bot',
+              content: '已记录最终出图标准：16:9、1440×810、无边框、影视级质感。可以直接进入生成。'
+            }
+          ]
+        },
+        {
+          id: 'h2',
+          title: '三层图',
+          time: '昨天 18:09',
+          messages: [
+            {
+              type: 'user',
+              content: '你是专业的海报分层处理智能体。请将当前上传海报自动拆分为三层独立图层。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我将按“底图、人物图、标题图”三层输出，确保后续可直接用于设计软件二次编辑。'
+            },
+            {
+              type: 'user',
+              content: '底图要求：不含人物、不含文字标题，只保留纯净背景层。'
+            },
+            {
+              type: 'bot',
+              content: '明白，底图会完整补齐被人物与文字遮挡区域，保持背景连续自然。'
+            },
+            {
+              type: 'user',
+              content: '人物图要求：仅保留海报中的人物主体，背景透明。'
+            },
+            {
+              type: 'bot',
+              content: '会采用精细抠图策略，优先处理发丝、衣摆、饰品等边缘细节，保证透明通道干净。'
+            },
+            {
+              type: 'user',
+              content: '标题图要求：仅提取文字标题和 LOGO 等文字元素，背景透明。'
+            },
+            {
+              type: 'bot',
+              content: '了解，标题层会完整保留笔画和描边，不损失清晰度，便于直接替换或移动。'
+            },
+            {
+              type: 'user',
+              content: '补充要求：人物抠图无锯齿无残留背景，文字提取完整，三层保持原图尺寸比例一致，输出三张独立清晰图片。'
+            },
+            {
+              type: 'bot',
+              content: '要求已锁定：三层同尺寸同分辨率输出，并执行边缘与文字完整性二次校验。'
+            }
+          ]
+        },
+        {
+          id: 'h3',
+          title: '自制剧品宣物料',
+          time: '03-18 15:41',
+          messages: [
+            {
+              type: 'user',
+              content: '品牌合规要求（必执行）：规范植入品牌 LOGO，位置固定且比例统一，不遮挡人物与核心剧名，不拉伸变形、不改配色。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我会严格按品牌规范执行 LOGO 植入，确保位置、尺寸、色值统一并避开主体信息区。'
+            },
+            {
+              type: 'user',
+              content: '还要标注标准自制剧 Slogan/版权信息，字体、字号、颜色遵循品牌 VI；无错字、无漏字、无格式偏差。'
+            },
+            {
+              type: 'bot',
+              content: '明白，我会按 VI 模板逐项核验文案与样式，完成后给出一版可直接投放的标准化版面。'
+            },
+            {
+              type: 'user',
+              content: '保留剧集官方定名和备案相关合规信息，不擅自修改、删减或增改文字内容。整体风格贴合品牌品宣基调。'
+            },
+            {
+              type: 'bot',
+              content: '已确认：官方命名与备案信息原样保留，视觉风格保持品牌统一，不做偏题创作。'
+            },
+            {
+              type: 'user',
+              content: '物料优化：画质提升为高清品宣级，无噪点无模糊；构图适配主流宣发场景；无边框无冗余元素，不加无关水印。'
+            },
+            {
+              type: 'bot',
+              content: '会按品宣级标准做清晰化与构图重整，兼顾社交平台传播效率，同时保持原剧海报氛围与人物表现。'
+            },
+            {
+              type: 'user',
+              content: '输出标准：16:9 横版高清海报，分辨率 1440×810 及以上，格式规整，品牌元素合规醒目，可用于全流程品宣。'
+            },
+            {
+              type: 'bot',
+              content: '最终输出规格已确认：16:9、1440×810 及以上、品牌合规可投放版本。准备进入出图流程。'
+            }
+          ]
+        }
+      ];
+      var ANALYST_HISTORY_SESSIONS = [
+        {
+          id: 'a1',
+          title: 'TV端周报',
+          time: '今天 11:08',
+          messages: [
+            {
+              type: 'user',
+              content: '角色定位：你是专业的 TV 端产品数据分析师 AI Agent，聚焦 TV 端运营场景，擅长指标解读和多维归因分析，输出专业、简洁、可落地的周报结论。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我会按 TV 端场景输出严谨分析，重点给出可执行结论，避免空话与泛化模板。'
+            },
+            {
+              type: 'user',
+              content: '核心任务：基于 TV 端周报原始数据，完成核心指标复盘 + 多维归因，说明波动与问题根因，为产品运营和内容优化提供决策依据。'
+            },
+            {
+              type: 'bot',
+              content: '明确。报告将先给指标结果，再拆归因，最后沉淀行动建议，形成闭环。'
+            },
+            {
+              type: 'user',
+              content: '必分析指标：DAU、用户播放总时长、DAU 占比、播放时长占比。每项都要给本期数值、环/同比变化、趋势判断，并标注异常节点。'
+            },
+            {
+              type: 'bot',
+              content: '已锁定四项核心指标为强制输出项，统一采用“数值 + 变化率 + 趋势”格式，并标记异常波动时点。'
+            },
+            {
+              type: 'user',
+              content: '归因维度必须完整：分地区、分厂商、分媒体渠道、分内容。每个维度都要有数据佐证，禁止主观臆断。'
+            },
+            {
+              type: 'bot',
+              content: '了解。四维归因会逐项给出证据链，覆盖地域贡献、厂商适配、渠道质量与内容拉动效果。'
+            },
+            {
+              type: 'user',
+              content: '输出规范：语言务实，关键数据突出；结构按“核心指标概览→分维度归因分析→核心结论”；不编造数据，不偏离 TV 端场景。'
+            },
+            {
+              type: 'bot',
+              content: '已确认报告规范与禁用项：不遗漏指标、不遗漏维度、不做无依据推断，确保周报可直接用于汇报。'
+            }
+          ]
+        },
+        {
+          id: 'a2',
+          title: '分地区数据',
+          time: '昨天 16:35',
+          messages: [
+            {
+              type: 'user',
+              content: '做分地区专项分析：先盘点本期全地区 DAU 与播放时长总体盘势，计算环比/同比波动阈值，区分正常与异常区间。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我会先建立地区波动基线，并标出超阈值地区，作为后续归因入口。'
+            },
+            {
+              type: 'user',
+              content: '需要输出 DAU TOP10 地区榜单，逐项给出 DAU、环/同比涨跌幅、播放时长及占比，并判断头部地区稳定性。'
+            },
+            {
+              type: 'bot',
+              content: '明白，TOP10 将以可汇报表述输出，并增加头部地区波动稳定性标记。'
+            },
+            {
+              type: 'user',
+              content: '对异动地区要深挖原因：结合地域活动、本地网络带宽、TV 厂商覆盖、区域内容排期、用户偏好迁移、渠道引流力度、版本适配情况。'
+            },
+            {
+              type: 'bot',
+              content: '会按“异常地区 -> 证据数据 -> 原因判断”三段式归因，避免模糊叙述。'
+            },
+            {
+              type: 'user',
+              content: '最后要做区域分层：核心贡献区、潜力增长区、流失待挽回区，并说明对整体 DAU 与播放时长的拉动或拖累。'
+            },
+            {
+              type: 'bot',
+              content: '已确认，结论区会单列“TOP10 汇总 + 大波动地区专项归因 + 区域分层结论”，便于管理层快速决策。'
+            }
+          ]
+        },
+        {
+          id: 'a3',
+          title: '内容效果对比',
+          time: '03-19 14:12',
+          messages: [
+            {
+              type: 'user',
+              content: '先做指标对齐：针对播放 UV、KR、播放时长三项指标，统一按“上线后 N 天”口径同期对比，消除上线时间差偏差。'
+            },
+            {
+              type: 'bot',
+              content: '收到，我会先做时间对齐，再进入横向比较，确保不同内容可比性成立。'
+            },
+            {
+              type: 'user',
+              content: '趋势呈现希望用折线图：横轴上线后天数，纵轴指标数值，不同内容用不同线条，能清楚看出走势差异。'
+            },
+            {
+              type: 'bot',
+              content: '了解，图表会分别展示 UV、KR、播放时长三张趋势线，并统一图例与刻度规范。'
+            },
+            {
+              type: 'user',
+              content: '请重点分析峰值、增速、衰减速度差异，并结合题材、推荐流量、排期策略、用户画像解释原因。'
+            },
+            {
+              type: 'bot',
+              content: '会补充“峰值出现时点 + 增长斜率 + 衰减周期”对比，给出内容表现差异的核心驱动因素。'
+            },
+            {
+              type: 'user',
+              content: '最后做价值判定：划分高价值爆款、平稳引流、低效待优化内容，并给出内容运营优化方向。'
+            },
+            {
+              type: 'bot',
+              content: '明白，结论会按三类内容输出运营动作建议，如加投策略、推荐位调整、题材补强与节奏优化。'
+            }
+          ]
+        }
+      ];
+      var DEFAULT_HISTORY_SESSIONS = [
+        {
+          id: 'default-1',
+          title: '默认训练会话',
+          time: '今天 09:30',
+          messages: [
+            { type: 'bot', content: '你好，我是养马聊天助手。请告诉我本次要优化的任务目标。' }
+          ]
+        }
+      ];
 
-      function roleLabel(role) {
-        return {
-          admin: '管理员',
-          manager: '管理者',
-          trainer: '训练者',
-          user: '使用者'
-        }[role] || '使用者';
+      function hasTrainPermission(userId, employeeId) {
+        if (!userId) return false;
+        var list = TRAIN_PERMISSION[String(userId)];
+        return list && list.indexOf(String(employeeId)) !== -1;
       }
 
-      var params = (function () {
+      function getParams() {
         var id = '';
+        var user = '';
         var search = window.location.search;
         var idM = /[?&]id=([^&]+)/.exec(search);
+        var userM = /[?&]user=([^&]+)/.exec(search);
         if (idM) id = decodeURIComponent(idM[1]);
-        return { id: id || 'TR002' };
-      })();
-
-      var EMPLOYEE_INTROS = {
-        '0001': { name: '海报图设计师', avatarClass: 'avatar-0001', scope: '负责专辑海报、活动 KV、Banner 等视觉物料的设计与产出，支持海外市场多平台尺寸与风格适配。', skills: '专辑海报与单人/双人构图；营销素材与多尺寸适配；风格把控（潮流、治愈、商务等）；与文案、运营协作落地需求。' },
-        '0002': { name: '专辑标题翻译官', avatarClass: 'avatar-0002', scope: '负责专辑、单曲、活动等标题与文案的中英及多语种翻译与本地化，保证语义准确、符合目标市场表达习惯。', skills: '中英互译与多语种标题；音乐/娱乐领域术语；文化适配与本地化表达；简短 slogan 与长文案翻译。' },
-        '0003': { name: '海外运营文案官', avatarClass: 'avatar-0003', scope: '负责海外社媒与活动相关的推广文案、帖子、活动说明等内容的撰写与优化，配合运营节奏输出素材。', skills: '活动/节日/上新类推广文案；多平台帖子与 hashtag 建议；用户向与 B 端文案；与设计师、热点抓取协作。' },
-        '0004': { name: '数据洞察分析师', avatarClass: 'avatar-0004', scope: '负责 DAU、留存、转化等核心指标的解读与归因分析，输出数据结论与可执行建议，支持业务决策。', skills: '核心指标解读与归因；数据结论与建议输出；与运营、产品协作；报表与看板搭建。' },
-        '0005': { name: '热点抓取师', avatarClass: 'avatar-0005', scope: '负责热点话题、爆款趋势的抓取与整理，为运营与内容提供选题与灵感，支持快速跟进热点。', skills: '热点与趋势识别；爆款案例与话题整理；多平台热点聚合；与运营文案、设计师协作产出。' },
-        '0006': { name: '线上检查助手', avatarClass: 'avatar-0006', scope: '负责线上活动与配置结果的巡检，帮助团队及时发现素材、文案、链接与展示异常。', skills: '基础巡检清单维护；异常问题定位；上线前后核验；与配置、运营协同闭环。' },
-        '0007': { name: '配置助手', avatarClass: 'avatar-0007', scope: '负责将活动位、推荐位与频道位等配置信息准确落到系统中，保障页面正确展示。', skills: '活动位与频道位配置；多端入口校验；上线排期跟进；与设计、运营联合验收。' },
-        'TR002': { name: '多语审核助手', avatarClass: 'avatar-0002', scope: '负责对多语种文案与素材进行规范性审核，帮助团队在上线前发现翻译、语气与文化适配问题。', skills: '多语文本校对；审核规则维护；敏感表达识别；与翻译和运营协作修正。' },
-        'PL004': { name: '剧本评估员', avatarClass: 'avatar-pl004', scope: '负责从题材、节奏、角色与商业化潜力等维度评估剧本可行性，为内容立项与投放判断提供支持。', skills: '题材判断；节奏与人物分析；商业化潜力评估；内容方向建议输出。' },
-        'PL001': { name: '周报撰写员', avatarClass: 'avatar-pl001', scope: '负责整理业务数据与过程记录，输出结构清晰、可阅读的周报内容，为团队复盘提供材料。', skills: '周报结构整理；数据与结论串联；重点问题提炼；复盘结论归纳。' },
-        'PL002': { name: '会议纪要整理师', avatarClass: 'avatar-pl002', scope: '负责将会议过程中的讨论与决策沉淀为结构化纪要，帮助跨角色团队快速对齐行动项。', skills: '会议重点提炼；待办归档；责任人与时间线整理；信息结构化呈现。' },
-        'PL003': { name: '爬虫助手', avatarClass: 'avatar-pl003', scope: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供稳定的数据输入与观察视角。', skills: '公开信息抓取；榜单与竞品监测；数据清洗整理；异常变化追踪。' }
-      };
-
-      var id = params.id;
-      var currentUser = getCurrentUser();
-      var currentRole = getUserRole(currentUser.id);
-      var isTrainingEmployee = TRAINING_EMPLOYEE_IDS.indexOf(id) !== -1;
-      var canTrain = currentRole === 'trainer' && isTrainingEmployee;
-      var viewer = document.getElementById('trainViewer');
-      var noPermEl = document.getElementById('trainNoPermission');
-      var permissionText = document.getElementById('trainPermissionText');
-      var trainCard = document.getElementById('trainCard');
-      var skillSection = document.getElementById('trainSkillSection');
-      var addSkillBtn = document.getElementById('addSkillBtn');
-
-      if (viewer) {
-        viewer.textContent = '当前查看身份：' + (currentUser.name || '小小小筒') + '（' + roleLabel(currentRole) + '）';
+        if (userM) user = decodeURIComponent(userM[1]);
+        return { id: id || '0001', user: user };
       }
 
-      var intro = EMPLOYEE_INTROS[id];
-      if (!intro) {
-        if (trainCard) {
-          trainCard.innerHTML = '<p style="text-align:center;color:var(--color-text-sub);">未找到该员工信息</p>';
-        }
-        if (noPermEl) noPermEl.style.display = 'none';
-        if (skillSection) skillSection.style.display = 'none';
+      function appendMessage(content, type) {
+        var chatLog = document.getElementById('chatLog');
+        if (!chatLog) return;
+        var div = document.createElement('div');
+        div.className = 'train-msg ' + type;
+        div.textContent = content;
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      function renderSessionMessages(messages) {
+        var chatLog = document.getElementById('chatLog');
+        if (!chatLog) return;
+        chatLog.innerHTML = '';
+        (messages || []).forEach(function (msg) {
+          appendMessage(msg.content, msg.type === 'user' ? 'user' : 'bot');
+        });
+      }
+
+      function initHistoryList(sessions) {
+        var historyList = document.getElementById('historyList');
+        if (!historyList) return;
+        historyList.innerHTML = '';
+        sessions.forEach(function (item) {
+          var li = document.createElement('li');
+          li.innerHTML =
+            '<button class="train-history-item" type="button">' +
+            '<p class="train-history-item-title">' + item.title + '</p>' +
+            '<p class="train-history-item-time">' + item.time + '</p>' +
+            '</button>';
+          var btn = li.firstChild;
+          btn.addEventListener('click', function () {
+            var allBtns = historyList.querySelectorAll('.train-history-item');
+            for (var i = 0; i < allBtns.length; i += 1) allBtns[i].classList.remove('active');
+            btn.classList.add('active');
+            renderSessionMessages(item.messages);
+          });
+          historyList.appendChild(li);
+        });
+      }
+
+      var params = getParams();
+      var id = params.id;
+      var userRole = getUserRole(params.user);
+      var hasPermission =
+        (userRole === 'admin' || userRole === 'trainer') &&
+        (userRole === 'admin' || hasTrainPermission(params.user, id));
+      var noPermEl = document.getElementById('trainNoPermission');
+      var trainLayout = document.getElementById('trainLayout');
+
+      if (!hasPermission) {
+        if (noPermEl) noPermEl.style.display = 'block';
+        if (trainLayout) trainLayout.style.display = 'none';
         return;
       }
 
-      document.getElementById('trainAvatar').className = 'train-card-avatar silicon-avatar ' + intro.avatarClass;
-      document.getElementById('trainTitle').textContent = intro.name;
-      document.getElementById('trainId').textContent = 'ID: ' + id;
-      document.getElementById('trainScope').textContent = intro.scope;
-      document.getElementById('trainSkills').textContent = intro.skills;
-
-      if (canTrain) {
-        if (noPermEl) noPermEl.style.display = 'none';
-        if (skillSection) skillSection.style.display = '';
+      var intro = EMPLOYEE_INTROS[id];
+      var title = document.getElementById('trainTitle');
+      if (!intro) {
+        if (title) title.textContent = '未找到该员工信息';
       } else {
-        if (noPermEl) noPermEl.style.display = 'block';
-        if (skillSection) skillSection.style.display = 'none';
-        if (permissionText) {
-          if (!isTrainingEmployee) {
-            permissionText.textContent = '该硅基员工当前不在训练阶段，暂不提供养马功能。';
-          } else {
-            permissionText.textContent = '当前身份仅可查看介绍，训练者可在此使用养马功能。';
-          }
-        }
+        document.getElementById('trainAvatar').className = 'train-card-avatar silicon-avatar ' + intro.avatarClass;
+        document.getElementById('trainTitle').textContent = intro.name;
+        document.getElementById('trainId').textContent = 'ID: ' + id;
+        document.getElementById('trainScope').textContent = intro.scope;
+        document.getElementById('trainSkills').textContent = intro.skills;
       }
 
-      if (addSkillBtn) {
-        addSkillBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          if (!canTrain) return;
-          alert('添加技能功能即将开放，敬请期待。');
+      var sessions = DEFAULT_HISTORY_SESSIONS;
+      if (id === '0001') {
+        sessions = DESIGNER_HISTORY_SESSIONS;
+      } else if (id === '0004') {
+        sessions = ANALYST_HISTORY_SESSIONS;
+      }
+      initHistoryList(sessions);
+      appendMessage('已创建新对话。请告诉我本次养马目标。', 'bot');
+
+      var sendBtn = document.getElementById('sendBtn');
+      var chatInput = document.getElementById('chatInput');
+      if (sendBtn && chatInput) {
+        sendBtn.addEventListener('click', function () {
+          var value = (chatInput.value || '').trim();
+          if (!value) return;
+          appendMessage(value, 'user');
+          appendMessage('收到，我会基于当前目标给出训练建议与技能补充方案。', 'bot');
+          chatInput.value = '';
         });
+        chatInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') sendBtn.click();
+        });
+      }
+
+      var newChatBtn = document.getElementById('newChatBtn');
+      if (newChatBtn) {
+        newChatBtn.addEventListener('click', function () {
+          var chatLog = document.getElementById('chatLog');
+          if (chatLog) chatLog.innerHTML = '';
+          appendMessage('已创建新对话。请告诉我本次养马目标。', 'bot');
+        });
+      }
+
+      var uploadBtn = document.getElementById('uploadBtn');
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', function () {
+          alert('附件上传功能已预留，下一步可接入文件选择与解析能力。');
+        });
+      }
+
+      var addSkillBtn = document.getElementById('addSkillBtn');
+      if (addSkillBtn) {
+        addSkillBtn.href = 'skill-market.html?id=' + encodeURIComponent(id) + '&user=' + encodeURIComponent(params.user || '');
       }
     })();
   </script>
