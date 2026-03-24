@@ -203,9 +203,7 @@
         ],
         factory: [
           { name: '短剧投放优化师', id: 'TR001', avatarClass: 'role-ops' },
-          { name: '多语审核助手', id: 'TR002', avatarClass: 'role-translator' },
           { name: '周报撰写员', id: 'PL001', avatarClass: 'role-analyst' },
-          { name: '会议纪要整理师', id: 'PL002', avatarClass: 'role-designer' },
           { name: '爬虫助手', id: 'PL003', avatarClass: 'role-hotspot', desc: '负责抓取站外舆情、榜单与竞品信息，为运营与分析提供数据输入。' }
         ]
       };
@@ -243,6 +241,8 @@
         }
         if (emptyEl) emptyEl.style.display = 'none';
         employees.forEach(function (employee) {
+          var intro = EMPLOYEE_INTROS[employee.id] || {};
+          var briefIntro = employee.desc || intro.scope || '';
           var li = document.createElement('li');
           li.className = 'employees-card';
           li.setAttribute('data-employee-id', employee.id);
@@ -254,7 +254,7 @@
             '<div class="employees-card-info">' +
             '<span class="employees-card-name">' + employee.name + '</span>' +
             '<span class="employees-card-id">ID: ' + employee.id + '</span>' +
-            (employee.desc ? '<span class="employees-card-desc">' + employee.desc + '</span>' : '') +
+            (briefIntro ? '<span class="employees-card-desc">' + briefIntro + '</span>' : '') +
             '</div>';
           listEl.appendChild(li);
         });
